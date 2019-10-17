@@ -13,7 +13,7 @@ import System
 # Common Language Runtime module (clr)
 import clr
 clr.AddReference('RevitAPI')
-clr.AddReference('RevitUI')
+clr.AddReference('RevitAPIUI')
 clr.AddReference('RevitServices')
 clr.AddReference('RevitNodes')
 clr.AddReference('ProtoGeometry')
