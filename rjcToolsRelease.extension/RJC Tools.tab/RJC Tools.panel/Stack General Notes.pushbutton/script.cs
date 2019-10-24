@@ -9,8 +9,10 @@ using Autodesk.Revit.UI.Selection;
 
 
 /*
-//Ali Tehami, Woods Bagot, Melbourne, Australia.
-//30/04/2019
+Author: Aric Crosson Bouwers
+Date: 2019 October 24th
+
+Thanks to Ali Tehami, Woods Bagot, Melbourne, Australia. for sharing this code open source.
 Thanks to Joshua Lumley for his great tips that enabled this proof of concept in PyRevit.
 Link to Joshua's youtube video explaning the method:
 https://youtu.be/KHMwd4U_Lrs
@@ -28,7 +30,8 @@ namespace PyRevitInvokeTesting
       public const string __title__ = "Stack\nGeneral Notes";
       public const string __doc__ = "Re-organize General Notes automatically by giving the extents of the sheet boundary";
       public const string __author__ = "PyRevit Implementation by: Aric Crosson Bouwers\nStack General Notes C# Code written by: Chris Febbraro\n Original PyRevit Implementation code by Ali Tehami \n+ \nOriginal code by Joshua Lumley";
-      public const string __helpurl__ = @"https://github.com/alitehami";
+      // Original script made by Ali Tehami
+      public const string __helpurl__ = @"https://github.com/alitehami/pyRevitBetaIdeas_Public/tree/master/aliTehami.extension/BetaConcepts.tab/invoking%20Assemblies.panel/invoke.pushbutton";
       public const string __min_revit_ver__ = "2016";
       public const string __max_revit_ver__ = "2019";
       public const bool __beta__ = false;
@@ -36,7 +39,7 @@ namespace PyRevitInvokeTesting
       public Result Execute (ExternalCommandData commandData, ref string message, ElementSet elements)
       {
          //path to the assembly. (can be automated if there is a way to access pyrevit's 'command_path' (so assemblies can live under a lib\ folder with script.cs)
-         string path = @"C:\Users\acrossonbouwers\Documents\GitHub\rjc-development\rjcCustomPythonTools\rjcCustomTools.extension\RJC Custom Tools.tab\RJC Custom Tools.panel\Stack General Notes.pushbutton\";
+         string path = @"C:\Users\acrossonbouwers\Documents\GitHub\rjc-development\rjcCustomPythonTools\rjcToolsRelease.extension\RJC Tools.tab\RJC Tools.panel\Stack General Notes.pushbutton\";
          String exeConfigPath = Path.GetDirectoryName (path)  + "\\Assembly\\GeneralNotesAutomation.dll";
          String exeConfigPath2 = Path.GetDirectoryName (path) + "\\Assembly";
 
@@ -82,4 +85,5 @@ namespace PyRevitInvokeTesting
       }
 
    }
+   
 }
