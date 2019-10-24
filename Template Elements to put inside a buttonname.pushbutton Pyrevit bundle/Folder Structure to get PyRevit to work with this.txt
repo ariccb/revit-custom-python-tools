@@ -1,0 +1,4 @@
+<Extension Name>.extension\<Tab Name>.tab\<Panel Name>.panel\<Button Name(class of .dll file you want to call, ie."invoke" as per template file)>.pushbutton\
+
+Then inside the .pushbutton folder there is an "Assembly" folder, in this example called "TestAssembly".
+Also inside the .pushbutton folder there is a script.cs file - this needs to be adjusted per button, per class you want to call per .dll file. Just rename the things that refer to this template.
