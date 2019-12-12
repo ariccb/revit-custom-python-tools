@@ -26,16 +26,6 @@ clr.AddReference('ProtoGeometry')
 
 # StackGeneralNotes is what i need to "call" in the rjc.GeneralNotesAutomation "namespace". NEED TO CHANGE THE NAMESPACES IN CHRIS FEBRARRO'S GENERAL NOTES ADDIN TO NOT INCLUDE PERIODS!!
 
-clr.AddReference('GeneralNotesAutomation')
-from rjcGeneralNotesAutomation import StackGeneralNotes
-myStackNotesInstance = StackGeneralNotes()
-
-myStackNotesInstance.Start()
-
-
-
-'''
-
 from Autodesk.Revit import DB
 
 doc = __revit__.ActiveUIDocument.Document
@@ -53,4 +43,3 @@ for wall in wall_collector:
 
 # now that results are collected, print the total
 print("Total Volume is: {}".format(total_volume))
-'''
