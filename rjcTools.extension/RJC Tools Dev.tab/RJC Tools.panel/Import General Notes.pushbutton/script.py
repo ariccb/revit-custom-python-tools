@@ -16,7 +16,7 @@ app = __revit__.Application
 doc = __revit__.ActiveUIDocument.Document
  
 #define a transaction variable and describe the transaction
-t = Transaction(doc, 'Import General Notes WIP')
+t = Transaction(doc, 'Import General Notes')
  
 #start a transaction in the Revit database
 t.Start()
