@@ -1,9 +1,12 @@
 import clr
 import System
+import os
 clr.AddReference('RevitAPI') 
 clr.AddReference('RevitAPIUI') 
 from Autodesk.Revit.DB import * 
- 
+clr.AddReference("Microsoft.Office.Interop.Excel")
+
+
 app = __revit__.Application
 doc = __revit__.ActiveUIDocument.Document
  
