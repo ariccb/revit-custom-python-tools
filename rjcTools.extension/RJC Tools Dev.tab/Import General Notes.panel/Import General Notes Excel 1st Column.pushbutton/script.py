@@ -35,18 +35,31 @@ workbook = excel.workbooks.Open(inputFile)
 
 #Worksheet, Row, and Column parameters
 worksheet = 1
-rowStart = 1
+rowStart = 2
 rowEnd = 100
-column = 1
- 
+checkboxColumn = 6
+
+#making list to store General Note ID #'s
+listGNIDs = [] 
+#variable for GNID's
+gNoteNum = ''
+
+#This is where i need to check the 6th (checkbox) Column in the "General Notes Selection Form" if it's TRUE or FALSE. 
+#If it is TRUE, then collect the GN ID#, and ADD IT TO listGNIDs
+#This needs to run row by row, and append the GN ID# to the list
+
 #Using a loop to read a range of values and print them to the console.
-while column < 7:    
-    for i in range(rowStart, rowEnd):
+for i in range(rowStart, rowEnd): 
+
     #Worksheet object specifying the cell location to read.
-        data = workbook.Worksheets(worksheet).Cells(i, column).Text
+    data = workbook.Worksheets(worksheet).Cells(i, checkboxColumn).Text
+    if(data == "TRUE"):
+        listGNIDs.append(workbook.Worksheets(worksheet).Cells(i, 2).Text)
+        if(data == ''):
+            continue    
         print data
-    column = column+1
-        
+print listGNIDs
+           
 
 t = Transaction(doc, 'Read Excel spreadsheet.')
 t.Start()
