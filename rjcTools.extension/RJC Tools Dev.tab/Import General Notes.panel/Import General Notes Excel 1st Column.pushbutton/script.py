@@ -37,15 +37,16 @@ workbook = excel.workbooks.Open(inputFile)
 worksheet = 1
 rowStart = 1
 rowEnd = 100
-column = 2
+column = 1
  
 #Using a loop to read a range of values and print them to the console.
-for i in range(rowStart, rowEnd):
+while column < 7:    
+    for i in range(rowStart, rowEnd):
     #Worksheet object specifying the cell location to read.
-    data = workbook.Worksheets(worksheet).Cells(i, column).Text
-    print data
-
-
+        data = workbook.Worksheets(worksheet).Cells(i, column).Text
+        print data
+    column = column+1
+        
 
 t = Transaction(doc, 'Read Excel spreadsheet.')
 t.Start()
