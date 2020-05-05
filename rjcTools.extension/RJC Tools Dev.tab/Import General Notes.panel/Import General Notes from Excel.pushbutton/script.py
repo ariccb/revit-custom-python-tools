@@ -65,6 +65,38 @@ t = Transaction(doc, 'Read Excel spreadsheet.')
 t.Start()
 # Write code here that interacts with Revit
 
+#using this video to figure this out: https://www.youtube.com/watch?v=WU_D2qNnuGg&index=7&list=PLc_1PNcpnV5742XyF8z7xyL9OF8XJNYnv
+
+
+#this is where you're going to put your ElementParameterFilter 
+#FilterStringRule() --> we need 'FilterableValueProvidor(valueProvidor type)' + 'FilterStringRuleEvaluator (evaluator type)' + 'string (ruleString type)' + 'bool (caseSensitive type)'
+#ElementParameterFilter(FilterStringRule
+
+#view_param_id = ElementId(__getitem__('General Notes ID Number'))
+#print (view_param_id)
+
+#collect all drafting views in project
+draftviews_collector = FilteredElementCollector(doc).OfClass(ViewDrafting).ToElements()
+print draftviews_collector
+
+
+#create list to add views from draftviews_collector that have a matching parameter value
+viewstouse = []
+
+#lookup the parameter 'Sheet Number' and add views to list if it matches 'NM-0201'
+for view in draftviews_collector:
+    param = view.LookupParameter('General Notes ID Number').AsString()
+    print param
+    if param == '0000-001':
+        viewstouse.append(view)
+
+print viewstouse
+
+
+#get element Id's for these views
+
+
+
 #commit the transaction to the Revit database
 t.Commit()
  
