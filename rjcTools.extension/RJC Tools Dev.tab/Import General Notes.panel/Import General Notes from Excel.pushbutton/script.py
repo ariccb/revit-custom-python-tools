@@ -65,33 +65,33 @@ t = Transaction(doc, 'Read Excel spreadsheet.')
 t.Start()
 # Write code here that interacts with Revit
 
-#using this video to figure this out: https://www.youtube.com/watch?v=WU_D2qNnuGg&index=7&list=PLc_1PNcpnV5742XyF8z7xyL9OF8XJNYnv
+                    #testing this part 
+                    # using this video to figure this out: https://www.youtube.com/watch?v=WU_D2qNnuGg&index=7&list=PLc_1PNcpnV5742XyF8z7xyL9OF8XJNYnv
 
-
-#this is where you're going to put your ElementParameterFilter 
-#FilterStringRule() --> we need 'FilterableValueProvidor(valueProvidor type)' + 'FilterStringRuleEvaluator (evaluator type)' + 'string (ruleString type)' + 'bool (caseSensitive type)'
-#ElementParameterFilter(FilterStringRule
-
-#view_param_id = ElementId(__getitem__('General Notes ID Number'))
-#print (view_param_id)
+                    #this is where you're going to put your ElementParameterFilter 
+                    #FilterStringRule() --> we need 'FilterableValueProvidor(valueProvidor type)' + 'FilterStringRuleEvaluator (evaluator type)' + 'string (ruleString type)' + 'bool (caseSensitive type)'
+                    #ElementParameterFilter(FilterStringRule
 
 #collect all drafting views in project
 draftviews_collector = FilteredElementCollector(doc).OfClass(ViewDrafting).ToElements()
-print draftviews_collector
 
+#uncomment the next two lines if you want to check the element id's for the views in the filter
+#draftviews_ids = FilteredElementCollector(doc).OfClass(ViewDrafting).ToElementIds()
+#print draftviews_ids
 
 #create list to add views from draftviews_collector that have a matching parameter value
-viewstouse = []
+selectedViews = []
+selectedViews_Names = []
 
-#lookup the parameter 'Sheet Number' and add views to list if it matches 'NM-0201'
-for view in draftviews_collector:
-    param = view.LookupParameter('General Notes ID Number').AsString()
-    print param
-    if param == '0000-001':
-        viewstouse.append(view)
 
-print viewstouse
+#lookup the parameter 'General Notes ID Number', using .AsString to get the value instead of just the Parameter, and add views to list if it matches any values in 'listGNIDs'
+for draftview in draftviews_collector: #creates a loop and iterates the following code through each instance in the list 'draftviews_collector' using draftview as the variable
+    param = draftview.LookupParameter('General Notes ID Number').AsString()
+    if param in listGNIDs:
+        selectedViews.append(draftview)         # saves the matching views to selectedViews list (the original element types)
+        selectedViews_Names.append(draftview.Name)    # prints the view name
 
+print selectedViews_Names
 
 #get element Id's for these views
 
