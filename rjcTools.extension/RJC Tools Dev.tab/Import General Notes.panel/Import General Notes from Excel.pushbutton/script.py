@@ -36,7 +36,7 @@ workbook = excel.workbooks.Open(inputFile)
 #Worksheet, Row, and Column parameters
 worksheet = 1
 rowStart = 2
-rowEnd = 100
+rowEnd = 236
 checkboxColumn = 6
 
 #making list to store General Note ID #'s
