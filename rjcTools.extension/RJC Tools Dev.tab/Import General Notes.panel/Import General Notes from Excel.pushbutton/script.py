@@ -57,7 +57,7 @@ for i in range(rowStart, rowEnd):
         listGNIDs.append(workbook.Worksheets(worksheet).Cells(i, 2).Text)
         if(data == ''):
             continue    
-        print data
+        #print data
 print listGNIDs
            
 
@@ -79,8 +79,9 @@ draftviews_collector = FilteredElementCollector(doc).OfClass(ViewDrafting).ToEle
 #draftviews_ids = FilteredElementCollector(doc).OfClass(ViewDrafting).ToElementIds()
 #print draftviews_ids
 
-#create list to add views from draftviews_collector that have a matching parameter value
+#create list to add views from draftviews_collector that have a matching parameter value for the following for loop
 selectedViews = []
+#similar list to spit out names for checking/clarity
 selectedViews_Names = []
 
 
@@ -92,8 +93,6 @@ for draftview in draftviews_collector: #creates a loop and iterates the followin
         selectedViews_Names.append(draftview.Name)    # prints the view name
 
 print selectedViews_Names
-
-#get element Id's for these views
 
 
 
