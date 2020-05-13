@@ -12,54 +12,65 @@ from System.Windows.Forms import *
 from System.Runtime.InteropServices import Marshal
 from System.Drawing import*
 
-
-inputFile = ""
-
-fileDialog = OpenFileDialog()
-fileDialog.InitialDirectory = "C:\Users\acrossonbouwers\Desktop\python test"
-fileDialog.ShowDialog()
-inputFile = fileDialog.FileName
-        
-print(inputFile)
-
-
 app = __revit__.Application
 doc = __revit__.ActiveUIDocument.Document
- 
 
-#Accessing the Excel applications.
-excel = Marshal.GetActiveObject("Excel.Application")
+user_excel_file = ''
 
-#Opening a workbook
-workbook = excel.workbooks.Open(inputFile)
+def select_file():
+    file_dialog = OpenFileDialog()
+    file_dialog.InitialDirectory = "C:\Users\acrossonbouwers\Desktop\python test"
+    file_dialog.ShowDialog()
+    file_name = file_dialog.FileName    
+    return file_name
 
-#Worksheet, Row, and Column parameters
-worksheet = 1
-rowStart = 2
-rowEnd = 236
-checkboxColumn = 6
+user_excel_file = select_file()
 
-#making list to store General Note ID #'s
-listGNIDs = [] 
-#variable for GNID's
-gNoteNum = ''
+print(user_excel_file)
 
-#This is where i need to check the 6th (checkbox) Column in the "General Notes Selection Form" if it's TRUE or FALSE. 
-#If it is TRUE, then collect the GN ID#, and ADD IT TO listGNIDs
-#This needs to run row by row, and append the GN ID# to the list
 
-#Using a loop to read a range of values and print them to the console.
-for i in range(rowStart, rowEnd): 
+def read_general_notes_form(): #start of the function that reads the General Notes Excel Form file...
 
-    #Worksheet object specifying the cell location to read.
-    data = workbook.Worksheets(worksheet).Cells(i, checkboxColumn).Text
-    if(data == "TRUE"):
-        listGNIDs.append(workbook.Worksheets(worksheet).Cells(i, 2).Text)
-        if(data == ''):
-            continue    
-        #print data
-print listGNIDs
-           
+    os.startfile(user_excel_file) #this opens Excel, the actual program (doesn't just read it from memory) and loads the selected file"""
+
+    #Accessing the Excel applications.
+    excel = Marshal.GetActiveObject("Excel.Application")
+
+
+
+    #Opening a workbook
+    workbook = excel.workbooks.Open(user_excel_file)    #excel files are called workbooks in the Marshal library
+
+    #Worksheet, Row, and Column parameters
+    worksheet = 1   #it's the first (and only) worksheet in the workbook
+    rowStart = 2    #starts reading the excel file at row 2 to skip the titles for the columns
+    rowEnd = 236    #this is how many rows total are in the RJC General Notes Selection Form.xlsm file - keep this updated if the form changes
+    checkboxColumn = 6  #defines which column contains the true/false values (here it's column 'F', which is the 6th column)
+
+    #initializing a list to store General Note ID #'s
+    list_generalnote_ids = [] 
+    #variable for GNID's
+    gen_note_numbers = ''
+
+    #This is where i need to check the 6th (checkbox) Column in the "General Notes Selection Form" if it's TRUE or FALSE. 
+    #If it is TRUE, then collect the GN ID#, and ADD IT TO list_generalnote_ids
+    #This needs to run row by row, and append the GN ID# to the list
+
+    #Using a loop to read a range of values and print them to the console.
+    for i in range(rowStart, rowEnd): 
+
+        #Worksheet object specifying the cell location to read.
+        data = workbook.Worksheets(worksheet).Cells(i, checkboxColumn).Text
+        if(data == "TRUE"):
+            list_generalnote_ids.append(workbook.Worksheets(worksheet).Cells(i, 2).Text)
+            if(data == ''):
+                continue    
+            #print data
+    print list_generalnote_ids
+    return list_generalnote_ids     # returning the list of general note id numbers
+
+list_generalnote_ids = read_general_notes_form()    #assigning the list from read_general_notes_form() return value to a variable to be used later in the code
+
 
 t = Transaction(doc, 'Read Excel spreadsheet.')
 t.Start()
@@ -85,10 +96,10 @@ selectedViews = []
 selectedViews_Names = []
 
 
-#lookup the parameter 'General Notes ID Number', using .AsString to get the value instead of just the Parameter, and add views to list if it matches any values in 'listGNIDs'
+#lookup the parameter 'General Notes ID Number', using .AsString to get the value instead of just the Parameter, and add views to list if it matches any values in 'list_generalnote_ids'
 for draftview in draftviews_collector: #creates a loop and iterates the following code through each instance in the list 'draftviews_collector' using draftview as the variable
     param = draftview.LookupParameter('General Notes ID Number').AsString()
-    if param in listGNIDs:
+    if param in list_generalnote_ids:
         selectedViews.append(draftview)         # saves the matching views to selectedViews list (the original element types)
         selectedViews_Names.append(draftview.Name)    # prints the view name
 
