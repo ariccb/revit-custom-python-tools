@@ -18,16 +18,18 @@ clr.AddReference("System.Windows.Forms")
 clr.AddReference("System.Drawing")
 
 
+
 from Autodesk.Revit.DB import * 
 from System.Windows.Forms import *
 from Microsoft.Office.Interop import Excel
+from Microsoft.Office.Interop.Excel import ApplicationClass
 from System.Runtime.InteropServices import Marshal
 from System.Drawing import*
 
 app = __revit__.Application
 doc = __revit__.ActiveUIDocument.Document
 
-user_excel_file = ''
+user_excel_file_path = ''
 
 def select_file():
     file_dialog = OpenFileDialog()
@@ -36,22 +38,32 @@ def select_file():
     file_name = file_dialog.FileName    
     return file_name
 
-user_excel_file = select_file()
+user_excel_file_path = select_file()
 
-print(user_excel_file)
+print(user_excel_file_path)
 
 
 def read_excel_general_notes_form(): #start of the function that reads the General Notes Excel Form file...
 
-    os.startfile(user_excel_file)   #this opens Excel, the actual program (doesn't just read it from memory) and loads the selected file
+    #os.startfile(user_excel_file_path)   #this opens Excel, the actual program (doesn't just read it from memory) and loads the selected file
                                     #the Marshal.GetActiveObject function needs excel to actually be running to work - there's probably a way
                                     #to get this working in the background too... i just don't know it
 
     #Accessing the Excel applications.
-    excel = Marshal.GetActiveObject("Excel.Application")
+    
+    try:
+        excel = Marshal.GetActiveObject("Excel.Application")
+    except:
+        excel = None
+    
+    if (excel == None):
+        excel = ApplicationClass()
+    
+    
+    
 
     #Opening a workbook
-    workbook = excel.workbooks.Open(user_excel_file)    #excel files are called workbooks in the Marshal library
+    workbook = excel.workbooks.Open(user_excel_file_path)    #excel files are called workbooks in the Marshal library
     
     #Worksheet, Row, and Column parameters NEEDS TO BE UPDATED IF THE FORM GETS LONGER!
     worksheet = 1   #it's the first (and only) worksheet in the workbook
@@ -78,7 +90,7 @@ def read_excel_general_notes_form(): #start of the function that reads the Gener
             if(data == ''):
                 continue    
             #print data
-    print list_generalnote_ids
+    print "The selected views in the form are: ", list_generalnote_ids
     return list_generalnote_ids     # returning the list of general note id numbers
 
 list_generalnote_ids = read_excel_general_notes_form()    #assigning the list from read_general_notes_form() return value to a variable to be used later in the code
@@ -103,19 +115,19 @@ draftviews_collector = FilteredElementCollector(doc).OfClass(ViewDrafting).ToEle
 #print draftviews_ids
 
 #create list to add views from draftviews_collector that have a matching parameter value for the following for loop
-selectedViews = []
+matchedViews = []
 #similar list to spit out names for checking/clarity
-selectedViews_Names = []
+matchedViews_Names = []
 
 
 #lookup the parameter 'General Notes ID Number', using .AsString to get the value instead of just the Parameter, and add views to list if it matches any values in 'list_generalnote_ids'
 for draftview in draftviews_collector: #creates a loop and iterates the following code through each instance in the list 'draftviews_collector' using draftview as the variable
-    param = draftview.LookupParameter('General Notes ID Number').AsString()
+    param = draftview.LookupParameter('RJC View ID').AsString()
     if param in list_generalnote_ids:
-        selectedViews.append(draftview)         # saves the matching views to selectedViews list (the original element types)
-        selectedViews_Names.append(draftview.Name)    # prints the view name
+        matchedViews.append(draftview)         # saves the matching views to matchedViews array (the original element types)
+        matchedViews_Names.append(draftview.Name)    # saves the view name to the matchedViews_Names array
 
-print selectedViews_Names
+print "Views in project matching the selection form are: ", matchedViews_Names   # prints the seelctedViews_Names array with added view names from ^ for loop (this array was empty prior to the for loop)
 
 
 
