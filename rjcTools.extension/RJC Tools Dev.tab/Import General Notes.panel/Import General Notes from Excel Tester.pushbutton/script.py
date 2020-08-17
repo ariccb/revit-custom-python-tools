@@ -17,8 +17,6 @@ clr.AddReference("Microsoft.Office.Interop.Excel")
 clr.AddReference("System.Windows.Forms")
 clr.AddReference("System.Drawing")
 
-
-
 from Autodesk.Revit.DB import * 
 from System.Windows.Forms import *
 from Microsoft.Office.Interop import Excel
@@ -30,10 +28,18 @@ app = __revit__.Application
 doc = __revit__.ActiveUIDocument.Document
 
 user_excel_file_path = ''
+doc_path = BasicFileInfo.Extract(doc.PathName).CentralPath
+print(doc_path)
+###OPTIONAL FEATURE ADD###
+#could add "pick from list" within revit by using pyrevit.forms
+#for reference, open __init__.py at C:\Users\acrossonbouwers\AppData\Roaming\pyRevit-Master\pyrevitlib\pyrevit\forms
+#Maybe it could ask if you want to load a pre-saved form (from engineer) or to load a list to select from yourself
 
+
+############### LAST EDITING HERE ##################
 def select_file():
     file_dialog = OpenFileDialog()
-    file_dialog.InitialDirectory = "C:\Users\acrossonbouwers\Desktop\python test"
+    file_dialog.InitialDirectory = doc_path ##THIS ISN'T WORKING, NOT STARTING DIALOG AT CENTRAL FILE LOCATION
     file_dialog.ShowDialog()
     file_name = file_dialog.FileName    
     return file_name
@@ -41,7 +47,6 @@ def select_file():
 user_excel_file_path = select_file()
 
 print(user_excel_file_path)
-
 
 def read_excel_general_notes_form(): #start of the function that reads the General Notes Excel Form file...
 
@@ -59,9 +64,6 @@ def read_excel_general_notes_form(): #start of the function that reads the Gener
     if (excel == None):
         excel = ApplicationClass()
     
-    
-    
-
     #Opening a workbook
     workbook = excel.workbooks.Open(user_excel_file_path)    #excel files are called workbooks in the Marshal library
     
@@ -73,8 +75,6 @@ def read_excel_general_notes_form(): #start of the function that reads the Gener
 
     #initializing a list to store General Note ID #'s
     list_generalnote_ids = [] 
-    #variable for GNID's
-    gen_note_numbers = ''
 
     #This is where i need to check the 6th (checkbox) Column in the "General Notes Selection Form" if it's TRUE or FALSE. 
     #If it is TRUE, then collect the GN ID#, and ADD IT TO list_generalnote_ids
@@ -121,11 +121,16 @@ matchedViews_Names = []
 
 
 #lookup the parameter 'General Notes ID Number', using .AsString to get the value instead of just the Parameter, and add views to list if it matches any values in 'list_generalnote_ids'
-for draftview in draftviews_collector: #creates a loop and iterates the following code through each instance in the list 'draftviews_collector' using draftview as the variable
-    param = draftview.LookupParameter('RJC View ID').AsString()
-    if param in list_generalnote_ids:
-        matchedViews.append(draftview)         # saves the matching views to matchedViews array (the original element types)
-        matchedViews_Names.append(draftview.Name)    # saves the view name to the matchedViews_Names array
+try: 
+    for draftview in draftviews_collector: #creates a loop and iterates the following code through each instance in the list 'draftviews_collector' using draftview as the variable
+        param = draftview.LookupParameter('RJC View ID').AsString()
+        if param in list_generalnote_ids:
+            matchedViews.append(draftview)         # saves the matching views to matchedViews array (the original element types)
+            matchedViews_Names.append(draftview.Name)    # saves the view name to the matchedViews_Names array
+
+except AttributeError as error:
+    print(error)
+    print("Looks like your project doesn't have the 'RJC View ID' parameter loaded. This add-in can't continue, so it's exiting.")
 
 print "Views in project matching the selection form are: ", matchedViews_Names   # prints the seelctedViews_Names array with added view names from ^ for loop (this array was empty prior to the for loop)
 
