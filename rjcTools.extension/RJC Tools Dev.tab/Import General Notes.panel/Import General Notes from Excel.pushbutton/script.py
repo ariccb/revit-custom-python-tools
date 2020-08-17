@@ -7,6 +7,7 @@ import traceback
 
 # .Net module
 import System
+from System import Environment
 import os
 
 # Common Language Runtime Module
@@ -16,8 +17,6 @@ clr.AddReference('RevitAPIUI')
 clr.AddReference("Microsoft.Office.Interop.Excel") 
 clr.AddReference("System.Windows.Forms")
 clr.AddReference("System.Drawing")
-
-
 
 from Autodesk.Revit.DB import * 
 from System.Windows.Forms import *
@@ -30,17 +29,20 @@ app = __revit__.Application
 doc = __revit__.ActiveUIDocument.Document
 
 user_excel_file_path = ''
-
+doc_path = str(BasicFileInfo.Extract(doc.PathName).CentralPath)
+print(doc_path)
 ###OPTIONAL FEATURE ADD###
 #could add "pick from list" within revit by using pyrevit.forms
 #for reference, open __init__.py at C:\Users\acrossonbouwers\AppData\Roaming\pyRevit-Master\pyrevitlib\pyrevit\forms
 #Maybe it could ask if you want to load a pre-saved form (from engineer) or to load a list to select from yourself
 
+
+############### LAST EDITING HERE ##################
 def select_file():
-    file_dialog = OpenFileDialog()
-    file_dialog.InitialDirectory = "C:\Users\acrossonbouwers\Desktop\python test"
-    file_dialog.ShowDialog()
-    file_name = file_dialog.FileName    
+    dlgOpen = OpenFileDialog()   
+    dlgOpen.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) ##THIS ISN'T WORKING, NOT STARTING DIALOG AT CENTRAL FILE LOCATION
+    dlgOpen.ShowDialog()
+    file_name = dlgOpen.FileName  
     return file_name
 
 user_excel_file_path = select_file()
@@ -119,20 +121,20 @@ matchedViews = []
 matchedViews_Names = []
 
 
-#lookup the parameter 'General Notes ID Number', using .AsString to get the value instead of just the Parameter, and add views to list if it matches any values in 'list_generalnote_ids'
-for draftview in draftviews_collector: #creates a loop and iterates the following code through each instance in the list 'draftviews_collector' using draftview as the variable
-    
-    try:
-        param = draftview.LookupParameter('RJC View ID').AsString()
+#lookup the parameter 'RJC Standard View ID', using .AsString to get the value instead of just the Parameter, and add views to list if it matches any values in 'list_generalnote_ids'
+try: 
+    for draftview in draftviews_collector: #creates a loop and iterates the following code through each instance in the list 'draftviews_collector' using draftview as the variable
+        param = draftview.LookupParameter('RJC Standard View ID').AsString()
         if param in list_generalnote_ids:
             matchedViews.append(draftview)         # saves the matching views to matchedViews array (the original element types)
             matchedViews_Names.append(draftview.Name)    # saves the view name to the matchedViews_Names array
+    print "Views in project matching the selection form are: ", matchedViews_Names   # prints the seelctedViews_Names array with added view names from ^ for loop (this array was empty prior to the for loop)
 
-    except AttributeError as error:
-        print(error)
-        print("Looks like your project doesn't have the 'RJC View ID' parameter loaded. This add-in can't continue, so it's exiting.")
 
-print "Views in project matching the selection form are: ", matchedViews_Names   # prints the seelctedViews_Names array with added view names from ^ for loop (this array was empty prior to the for loop)
+except:
+    print(error)
+    print("Looks like your project doesn't have the 'RJC Standard View ID' parameter loaded. This add-in can't continue, so it's exiting.")
+
 
 
 
