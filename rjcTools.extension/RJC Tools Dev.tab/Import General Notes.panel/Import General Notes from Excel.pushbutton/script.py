@@ -18,6 +18,7 @@ clr.AddReference("Microsoft.Office.Interop.Excel")
 clr.AddReference("System.Windows.Forms")
 clr.AddReference("System.Drawing")
 
+from Autodesk.Revit.ApplicationServices import *
 from Autodesk.Revit.DB import * 
 from System.Windows.Forms import *
 from Microsoft.Office.Interop import Excel
@@ -30,14 +31,15 @@ doc = __revit__.ActiveUIDocument.Document
 
 user_excel_file_path = ''
 doc_path = str(BasicFileInfo.Extract(doc.PathName).CentralPath)
+corp_metric_gn_path = 'R:\Technical Resources\STR\General Notes and Details\Revit\STR-STD-001-20200812-RCK-Metric Notes - Revit 2018.rvt'
+corp_imp_gn_path = 'R:\Technical Resources\STR\General Notes and Details\Revit\STR-STD-000-20200812-RCK-Imperial Notes - Revit 2018.rvt'
+cal_gn_path = 'R:\Office Services\CAL\STR\Cal Project Resources\_Production Resources\3 DD\RJC Calgary General Notes\RJC Calgary General Notes - Metric.rvt'
 print(doc_path)
-###OPTIONAL FEATURE ADD###
-#could add "pick from list" within revit by using pyrevit.forms
-#for reference, open __init__.py at C:\Users\acrossonbouwers\AppData\Roaming\pyRevit-Master\pyrevitlib\pyrevit\forms
-#Maybe it could ask if you want to load a pre-saved form (from engineer) or to load a list to select from yourself
+                        ###OPTIONAL FEATURE ADD###
+                        #could add "pick from list" within revit by using pyrevit.forms
+                        #for reference, open __init__.py at C:\Users\acrossonbouwers\AppData\Roaming\pyRevit-Master\pyrevitlib\pyrevit\forms
+                        #Maybe it could ask if you want to load a pre-saved form (from engineer) or to load a list to select from yourself
 
-
-############### LAST EDITING HERE ##################
 def select_file():
     dlgOpen = OpenFileDialog()   
     dlgOpen.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) ##THIS ISN'T WORKING, NOT STARTING DIALOG AT CENTRAL FILE LOCATION
@@ -49,14 +51,8 @@ user_excel_file_path = select_file()
 
 print(user_excel_file_path)
 
-def read_excel_general_notes_form(): #start of the function that reads the General Notes Excel Form file...
-
-    #os.startfile(user_excel_file_path)   #this opens Excel, the actual program (doesn't just read it from memory) and loads the selected file
-                                    #the Marshal.GetActiveObject function needs excel to actually be running to work - there's probably a way
-                                    #to get this working in the background too... i just don't know it
-
+def read_excel_general_notes_form():
     #Accessing the Excel applications.
-    
     try:
         excel = Marshal.GetActiveObject("Excel.Application")
     except:
@@ -97,7 +93,7 @@ def read_excel_general_notes_form(): #start of the function that reads the Gener
 list_generalnote_ids = read_excel_general_notes_form()    #assigning the list from read_general_notes_form() return value to a variable to be used later in the code
 
 
-t = Transaction(doc, 'Read Excel spreadsheet.')
+t = Transaction(doc, 'Import General Notes')
 t.Start()
 # Write code here that interacts with Revit
 
