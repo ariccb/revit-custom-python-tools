@@ -73,21 +73,15 @@ def read_excel_general_notes_form():
     #initializing a list to store General Note ID #'s
     list_generalnote_ids = [] 
 
-    #This is where i need to check the 6th (checkbox) Column in the "General Notes Selection Form" if it's TRUE or FALSE. 
-    #If it is TRUE, then collect the GN ID#, and ADD IT TO list_generalnote_ids
-    #This needs to run row by row, and append the GN ID# to the list
-
-    #Using a loop to read a range of values and print them to the console.
-    for i in range(rowStart, rowEnd): 
+    for i in range(rowStart, rowEnd): #Using a loop to read a range of values and print them to the console.
 
         #Worksheet object specifying the cell location to read.
         data = workbook.Worksheets(worksheet).Cells(i, checkboxColumn).Text
         if(data == "TRUE"):
             list_generalnote_ids.append(workbook.Worksheets(worksheet).Cells(i, 2).Text)
-            if(data == ''):
-                continue    
-            #print data
-    print "The selected views in the form are: ", list_generalnote_ids
+        if(data == ''):
+            continue            
+    print "The selected views in the form are: ", list_generalnote_ids #print which ones were checked in the excel file 
     return list_generalnote_ids     # returning the list of general note id numbers
 
 list_generalnote_ids = read_excel_general_notes_form()    #assigning the list from read_general_notes_form() return value to a variable to be used later in the code
@@ -116,7 +110,7 @@ matchedViews = []
 #similar list to spit out names for checking/clarity
 matchedViews_Names = []
 
-
+input('What General Note View ID Should I try to load?')
 #lookup the parameter 'RJC Standard View ID', using .AsString to get the value instead of just the Parameter, and add views to list if it matches any values in 'list_generalnote_ids'
 try: 
     for draftview in draftviews_collector: #creates a loop and iterates the following code through each instance in the list 'draftviews_collector' using draftview as the variable
