@@ -29,6 +29,7 @@ clr.AddReference('ProtoGeometry')
 from Autodesk.Revit import DB
 
 doc = __revit__.ActiveUIDocument.Document
+__title__='Calculate Volume\n Of Selected Walls'
 
 # Creating collector instance and collecting all the walls from the model
 wall_collector = DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Walls).WhereElementIsNotElementType()

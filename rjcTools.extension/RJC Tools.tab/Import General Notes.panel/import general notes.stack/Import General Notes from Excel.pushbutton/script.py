@@ -28,6 +28,7 @@ from System.Drawing import*
 
 app = __revit__.Application
 doc = __revit__.ActiveUIDocument.Document
+__title__='Import General\nNotes From\nExcel'
 
 user_excel_file_path = ''
 doc_path = str(BasicFileInfo.Extract(doc.PathName).CentralPath)

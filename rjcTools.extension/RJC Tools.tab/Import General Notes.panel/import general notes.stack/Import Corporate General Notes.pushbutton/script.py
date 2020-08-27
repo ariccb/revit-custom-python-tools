@@ -11,6 +11,7 @@ from pyrevit.revit import query
 
 app = __revit__.Application
 doc = __revit__.ActiveUIDocument.Document
+__title__='Import Corporate\nGeneral Notes'
 
 class CopyUseDestination(DB.IDuplicateTypeNamesHandler):
     def OnDuplicateTypeNamesFound(self, args):

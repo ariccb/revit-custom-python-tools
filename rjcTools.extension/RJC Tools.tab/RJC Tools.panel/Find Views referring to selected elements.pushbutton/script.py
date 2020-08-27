@@ -20,6 +20,7 @@ from Autodesk.Revit.DB import *
 from pyrevit.forms import WPFWindow
 
 doc = DocumentManager.Instance.CurrentDBDocument
+__title__='Find Views Referring\n To Selected Elements'
 
 elementz = uidoc.Selection.PickObject(ObjectType.Element)
 

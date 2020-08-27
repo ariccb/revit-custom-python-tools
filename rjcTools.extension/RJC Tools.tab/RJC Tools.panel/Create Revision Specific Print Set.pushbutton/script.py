@@ -15,6 +15,7 @@ app = __revit__.Application
 uidoc = __revit__.ActiveUIDocument
 doc = __revit__.ActiveUIDocument.Document
 selection = [doc.GetElement(elId) for elId in uidoc.Selection.GetElementIds()]
+__title__= 'Revision Specific\nPrint Set'
 
 
  

@@ -27,7 +27,7 @@ namespace PyRevitInvokeTesting
    {
 
       //PyRevit MetaData
-      public const string __title__ = "Stack\nGeneral Notes";
+      public const string __title__ = "Format General Notes";
       public const string __doc__ = "Re-organize General Notes automatically by giving the extents of the sheet boundary";
       public const string __author__ = "PyRevit Implementation by: Aric Crosson Bouwers\nStack General Notes C# Code written by: Chris Febbraro\n Original PyRevit Implementation code by Ali Tehami \n+ \nOriginal code by Joshua Lumley";
       // Original script made by Ali Tehami
