@@ -573,32 +573,5 @@ OPTION_M_OR_I = metric_or_imperial_options()
 
 
 
-
-dest_docs = doc
-doc_count = len(dest_docs)
-
-source_sheets = get_source_sheets()
-sheet_count = len(source_sheets)
-
-OPTION_SET = get_user_options()
-
-total_work = doc_count * sheet_count
-work_counter = 0
-
-for dest_doc in dest_docs:
-    output.print_md('**Copying Sheet(s) to Document:** {0}'
-                    .format(dest_doc.Title))
-
-    for source_sheet in source_sheets:
-        print('Copying Sheet: {0} - {1}'.format(source_sheet.SheetNumber,
-                                                source_sheet.Name))
-        copy_sheet(revit.doc, source_sheet, dest_doc)
-        work_counter += 1
-        output.update_progress(work_counter, total_work)
-
-    output.print_md('**Copied {} sheets to {} documents.**'
-                    .format(sheet_count, doc_count))
-
-
 #get_dest_docs() needs to be replaced with "current document"
 #get source stuff needs to be replaced with "backgroundDoc"
