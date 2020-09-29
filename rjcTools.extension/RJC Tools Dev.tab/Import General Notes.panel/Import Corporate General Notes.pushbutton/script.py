@@ -1,6 +1,7 @@
 # Set sys.path
 import sys
 import os
+import fnmatch
 
 import pyrevit
 from pyrevit.forms import alert
@@ -72,46 +73,57 @@ class CopyUseDestination(DB.IDuplicateTypeNamesHandler):
         """Use destination model types if duplicate."""
         return DB.DuplicateTypeAction.UseDestinationTypes
 
-# corp_metric_gn_path = 'R:\Technical Resources\STR\General Notes and Details\Revit\STR-STD-001-20200824-RCK-Metric Notes - Revit 2018.rvt'
-# corp_imp_gn_path = 'R:\Technical Resources\STR\General Notes and Details\Revit\STR-STD-000-20200824-RCK-Imperial Notes - Revit 2018.rvt'
+corp_gn_path = 'R:\Technical Resources\STR\General Notes and Details\Revit'
 # cal_gn_path = 'R:\Office Services\CAL\STR\Cal Project Resources\_Production Resources\3 DD\RJC Calgary General Notes\RJC Calgary General Notes - Metric.rvt'
 
 
 # Ask if you want imperial or metric notes, load correct path
 def metric_or_imperial_options():
+    selected_units = ''
     op_set = MetricOrImperialOptionSet()
     metric_or_imperial = forms.SelectFromList.show(
         [getattr(op_set, x) for x in dir(op_set) if x.startswith('op_')], 
-        title='Select Import Options',
+        title='Select Corporate General Note To Import',
         multiselect=False,
         height=225
         )
     # closure function for checking the file paths work (the scope is only 
-    # instide metric_or_impeial_options() function)
-    def check_GN_file_paths(file_path):
-        if not os.path.isfile(file_path):
-            alert('The path to the {} Revit file needs to be updated,\
-                    please select the correct file'.format(metric_or_imperial))
-            new_file_path = pyrevit.forms.pick_file(file_ext='rvt', \
-                                    init_dir='R:\Technical Resources\STR\General Notes and Details\Revit', \
-                                    multi_file=False)
-            return new_file_path
-        else:
-            return file_path
+    # inside metric_or_impeial_options() function)
+    def check_GN_file_paths(file_path, units):
+        # check filename with wildcards to allow changing of date and revit version in template filename
+        for file in os.listdir(file_path):
+            if fnmatch.fnmatch(file,'STR-STD-00?-*'+units+' Notes - Revit 20??.rvt'):
+                concat_file_path = file_path + '\\' + file
+                if not os.path.isfile(concat_file_path):
+                    alert('The path to the {} Revit file needs to be updated, please select the correct file'.format(metric_or_imperial))
+                    new_file_path = pyrevit.forms.pick_file(file_ext='rvt', \
+                                                            init_dir=corp_gn_path, \
+                                                            multi_file=False)
+
+                    print('the new selected file to be loaded in background is: ' + new_file_path)
+                    return new_file_path
+                else:
+                    print(concat_file_path)
+                    return concat_file_path
+        
     if not metric_or_imperial:
         sys.exit(0)
 
+    # load metric file from corporate file path if Metric is chosen in the metric_or_imperial form
     if metric_or_imperial == 'Metric Corporate General Notes':
-        print('metric')
-        updated_file_path = check_GN_file_paths('R:\Technical Resources\STR\General Notes and Details\Revit\STR-STD-001-20200824-RCK-Metric Notes - Revit 2018.rvt')
-        backgroundDoc = app.OpenDocumentFile(DB.ModelPathUtils.ConvertUserVisiblePathToModelPath(updated_file_path), options)
-        print(backgroundDoc)
+        selected_units = 'Metric'
+        
 
+    # load imperial revit file from corporate file path if Imperial is chosen in the metric_or_imperial form
     if metric_or_imperial == 'Imperial Corporate General Notes': 
-        print('imperial')
-        updated_file_path = check_GN_file_paths('R:\Technical Resources\STR\General Notes and Details\Revit\STR-STD-000-20200824-RCK-Imperial Notes - Revit 2018.rvt')
-        backgroundDoc = app.OpenDocumentFile(DB.ModelPathUtils.ConvertUserVisiblePathToModelPath(updated_file_path), options)
-        print(backgroundDoc)
+        selected_units = 'Imperial'
+    
+    print('Attempting to load the ' + metric_or_imperial + ' Revit file')
+    final_gn_file_path = check_GN_file_paths(corp_gn_path,selected_units)
+    # converts into the file path that Revit can read
+    backgroundDoc = app.OpenDocumentFile(DB.ModelPathUtils.ConvertUserVisiblePathToModelPath(final_gn_file_path), options)
+    print('The ' + metric_or_imperial + ' Revit file has been loaded in the backgorund')
+    print(backgroundDoc)
 
     return op_set
 
