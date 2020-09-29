@@ -93,8 +93,9 @@ def metric_or_imperial_options():
         # check filename with wildcards to allow changing of date and revit version in template filename
         for file in os.listdir(file_path):
             if fnmatch.fnmatch(file,'STR-STD-00?-*'+units+' Notes - Revit 20??.rvt'):
-                concat_file_path = file_path + '\\' + file
-                if not os.path.isfile(concat_file_path):
+                file_path = file_path + '\\' + file
+                print('path after fnmatch check: ' + file_path)
+                if not os.path.isfile(file_path):                    
                     alert('The path to the {} Revit file needs to be updated, please select the correct file'.format(metric_or_imperial))
                     new_file_path = pyrevit.forms.pick_file(file_ext='rvt', \
                                                             init_dir=corp_gn_path, \
@@ -103,8 +104,8 @@ def metric_or_imperial_options():
                     print('the new selected file to be loaded in background is: ' + new_file_path)
                     return new_file_path
                 else:
-                    print(concat_file_path)
-                    return concat_file_path
+                    print('Loading... ' + file_path)
+                    return file_path
         
     if not metric_or_imperial:
         sys.exit(0)
