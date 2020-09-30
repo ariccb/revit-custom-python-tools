@@ -27,8 +27,7 @@ options.DetachFromCentralOption = options.DetachFromCentralOption.DetachAndPrese
 
 
 app = __revit__.Application
-doc = __revit__.ActiveUIDocument.Document
-backgroundDoc = ''
+active_doc = __revit__.ActiveUIDocument.Document
 VIEW_TOS_PARAM = DB.BuiltInParameter.VIEW_DESCRIPTION
 
 class CopyUseDestination(DB.IDuplicateTypeNamesHandler):
@@ -43,6 +42,7 @@ class Option(forms.TemplateListItem):
 
 class OptionSet:
     def __init__(self):
+        '''
         self.op_copy_vports = Option('Copy Viewports', True)
         self.op_copy_schedules = Option('Copy Schedules', True)
         self.op_copy_titleblock = Option('Copy Sheet Titleblock', True)
@@ -50,6 +50,7 @@ class OptionSet:
         self.op_copy_placeholders_as_sheets = \
             Option('Copy Placeholders as Sheets', True)
         self.op_copy_guides = Option('Copy Guide Grids', True)
+        '''
         self.op_update_exist_view_contents = \
             Option('Update Existing View Contents')
 
@@ -111,8 +112,9 @@ def metric_or_imperial_options():
         sys.exit(0)
 
     # load metric file from corporate file path if Metric is chosen in the metric_or_imperial form
-    if metric_or_imperial == 'Metric Corporate General Notes':
+    if metric_or_imperial == 'Metric Corporate General Notes': 
         selected_units = 'Metric'
+        
         
 
     # load imperial revit file from corporate file path if Imperial is chosen in the metric_or_imperial form
@@ -122,23 +124,28 @@ def metric_or_imperial_options():
     print('Attempting to load the ' + metric_or_imperial + ' Revit file')
     final_gn_file_path = check_GN_file_paths(corp_gn_path,selected_units)
     # converts into the file path that Revit can read
-    backgroundDoc = app.OpenDocumentFile(DB.ModelPathUtils.ConvertUserVisiblePathToModelPath(final_gn_file_path), options)
-    print('The ' + metric_or_imperial + ' Revit file has been loaded in the backgorund')
+    modelPath = DB.ModelPathUtils.ConvertUserVisiblePathToModelPath(final_gn_file_path)
+    backgroundDoc = app.OpenDocumentFile(modelPath, options)
+    print(backgroundDoc)
+    
+
+    print('The ' + metric_or_imperial + ' Revit file has been loaded in the backgorund. Below should be same as source_doc')
     print(backgroundDoc)
 
-    return op_set
+    return backgroundDoc
 
 '''
 def get_current_session_views():
     # get all views and collect names of current doc
-    all_graphviews = revit.query.get_all_views(doc=revit.doc)
+    #draftviews_collector = DB.FilteredElementCollector(dest_doc).OfClass(DB.ViewDrafting).ToElements()
+    all_graphviews = revit.query.get_all_views(doc=dest_doc)
     gn_views = []
     for element in all_graphviews:
         targetparam = element.LookupParameter('RJC Standard View ID')
         if targetparam:
             
             and value is not None \
-            
+        
 
 
 
@@ -152,22 +159,73 @@ def get_current_session_views():
                         #    if len(x.LookupParameter('RJC Standard View ID').ToString()) >= 3]
         return gn_views, all_draftview_names
 
+'''  
 
 def get_background_session_views():
     drafting_views_to_copy = forms.select_views(
         title='General Notes to Import',
-        doc=backgroundDoc,
+        doc=source_doc,
         filterfunc=lambda x: x.ViewType == DB.ViewType.DraftingView)
 
     if drafting_views_to_copy:
         # iterate over interfacetypes drafting views
         for src_drafting in drafting_views_to_copy:
+            print(src_drafting)
             logger.debug('Copying %s', revit.query.get_name(src_drafting))
 
             # get drafting view elements and exclude non-copyable elements
-'''
+
 
 ### place copied code definitions here (from 'Copy Sheets to Open Documents Pyrevit File)
+
+def get_source_views(title='Select General Notes To Import',
+                 button_name='Import General Notes',
+                 width=forms.DEFAULT_INPUTWINDOW_WIDTH,
+                 multiple=True,
+                 filterfunc=None,
+                 doc=None):
+    
+    """Standard form for selecting General Notes.
+
+    Args:
+        title (str, optional): list window title
+        button_name (str, optional): list window button caption
+        width (int, optional): width of list window
+        multiselect (bool, optional):
+            allow multi-selection (uses check boxes). defaults to True
+        filterfunc (function):
+            filter function to be applied to context items.
+        doc (DB.Document, optional):
+            source document for views; defaults to active document
+    Returns:
+        list[DB.View]: list of selected views
+    """
+    
+    all_graphviews = revit.query.get_all_views(doc=source_doc)
+
+    if filterfunc:
+        all_graphviews = filter(filterfunc, all_graphviews)
+
+    selected_views = forms.SelectFromList.show(
+        sorted([forms.ViewOption(x) for x in all_graphviews],
+               key=lambda x: x.name),
+        title=title,
+        button_name=button_name,
+        width=width,
+        multiselect=multiple,
+        checked_only=True
+        )
+
+    if not selected_views:
+        sys.exit(0)
+
+    print(selected_views)
+    print('get_source_views results^')
+    return selected_views
+
+
+
+
 def get_user_options():
     op_set = OptionSet()
     return_options = \
@@ -183,25 +241,26 @@ def get_user_options():
 
     return op_set
 
+### DON'T NEED THIS BECAUSE OUR DESTINATION IS THE CURRENT DOC.
+# def get_dest_docs():
+#     # find open documents other than the active doc
+#     selected_dest_docs = \
+#         forms.select_open_docs(title='Select Destination Documents')
+#     if not selected_dest_docs:
+#         sys.exit(0)
+#     else:
+#         return selected_dest_docs
 
-def get_dest_docs():
-    # find open documents other than the active doc
-    selected_dest_docs = \
-        forms.select_open_docs(title='Select Destination Documents')
-    if not selected_dest_docs:
-        sys.exit(0)
-    else:
-        return selected_dest_docs
 
+### DON'T NEED THIS BECAUSE WE'RE LOADING THE VIEWS FROM A DIFFERENT DOCUMENT (FUNCTION DEF BELOW)
+# def get_source_views():
+#     view_elements = forms.select_sheets(button_name='Copy Sheets',
+#                                          use_selection=True)
 
-def get_source_sheets():
-    sheet_elements = forms.select_sheets(button_name='Copy Sheets',
-                                         use_selection=True)
+#     if not view_elements:
+#         sys.exit(0)
 
-    if not sheet_elements:
-        sys.exit(0)
-
-    return sheet_elements
+#     return view_elements
 
 
 def get_default_type(source_doc, type_group):
@@ -296,12 +355,12 @@ def clear_view_contents(dest_doc, dest_view):
     return True
 
 
-def copy_view_contents(activedoc, source_view, dest_doc, dest_view,
+def copy_view_contents(sourceDoc, source_view, dest_doc, dest_view,
                        clear_contents=False):
     logger.debug('Copying view contents: {} : {}'
                  .format(source_view.Name, source_view.ViewType))
 
-    elements_ids = get_view_contents(activedoc, source_view)
+    elements_ids = get_view_contents(sourceDoc, source_view)
 
     if clear_contents:
         if not clear_view_contents(dest_doc, dest_view):
@@ -330,12 +389,12 @@ def copy_view_props(source_view, dest_view):
     )
 
 
-def copy_view(activedoc, source_view, dest_doc):
+def copy_view(sourceDoc, source_view, dest_doc):
     matching_view = find_matching_view(dest_doc, source_view)
     if matching_view:
         print('\t\t\tView/Sheet already exists in document.')
         if OPTION_SET.op_update_exist_view_contents:
-            if not copy_view_contents(activedoc,
+            if not copy_view_contents(sourceDoc,
                                       source_view,
                                       dest_doc,
                                       matching_view,
@@ -412,12 +471,12 @@ def copy_view(activedoc, source_view, dest_doc):
                          .format(sheet_err))
 
     if new_view:
-        copy_view_contents(activedoc, source_view, dest_doc, new_view)
+        copy_view_contents(sourceDoc, source_view, dest_doc, new_view)
 
     return new_view
 
 
-def copy_viewport_types(activedoc, vport_type, vport_typename,
+def copy_viewport_types(sourceDoc, vport_type, vport_typename,
                         dest_doc, newvport):
     dest_vport_typenames = [DBElement.Name.GetValue(dest_doc.GetElement(x))
                             for x in newvport.GetValidTypes()]
@@ -430,7 +489,7 @@ def copy_viewport_types(activedoc, vport_type, vport_typename,
                                doc=dest_doc,
                                swallow_errors=True):
             DB.ElementTransformUtils.CopyElements(
-                activedoc,
+                sourceDoc,
                 List[DB.ElementId]([vport_type.Id]),
                 dest_doc,
                 None,
@@ -438,15 +497,15 @@ def copy_viewport_types(activedoc, vport_type, vport_typename,
                 )
 
 
-def apply_viewport_type(activedoc, vport_id, dest_doc, newvport_id):
+def apply_viewport_type(sourceDoc, vport_id, dest_doc, newvport_id):
     with revit.Transaction('Apply Viewport Type', doc=dest_doc):
-        vport = activedoc.GetElement(vport_id)
-        vport_type = activedoc.GetElement(vport.GetTypeId())
+        vport = sourceDoc.GetElement(vport_id)
+        vport_type = sourceDoc.GetElement(vport.GetTypeId())
         vport_typename = DBElement.Name.GetValue(vport_type)
 
         newvport = dest_doc.GetElement(newvport_id)
 
-        copy_viewport_types(activedoc, vport_type, vport_typename,
+        copy_viewport_types(sourceDoc, vport_type, vport_typename,
                             dest_doc, newvport)
 
         for vtype_id in newvport.GetValidTypes():
@@ -455,17 +514,17 @@ def apply_viewport_type(activedoc, vport_id, dest_doc, newvport_id):
                 newvport.ChangeTypeId(vtype_id)
 
 
-def copy_sheet_viewports(activedoc, source_sheet, dest_doc, dest_sheet):
+def copy_sheet_viewports(sourceDoc, source_view, dest_doc, dest_sheet):
     existing_views = [dest_doc.GetElement(x).ViewId
                       for x in dest_sheet.GetAllViewports()]
 
-    for vport_id in source_sheet.GetAllViewports():
-        vport = activedoc.GetElement(vport_id)
-        vport_view = activedoc.GetElement(vport.ViewId)
+    for vport_id in source_view.GetAllViewports():
+        vport = sourceDoc.GetElement(vport_id)
+        vport_view = sourceDoc.GetElement(vport.ViewId)
 
         print('\t\tCopying/updating view: {}'
               .format(revit.query.get_name(vport_view)))
-        new_view = copy_view(activedoc, vport_view, dest_doc)
+        new_view = copy_view(sourceDoc, vport_view, dest_doc)
 
         if new_view:
             ref_info = revit.query.get_view_sheetrefinfo(new_view)
@@ -482,20 +541,20 @@ def copy_sheet_viewports(activedoc, source_sheet, dest_doc, dest_sheet):
                                                 new_view.Id,
                                                 vport.GetBoxCenter())
                 if nvport:
-                    apply_viewport_type(activedoc, vport_id,
+                    apply_viewport_type(sourceDoc, vport_id,
                                         dest_doc, nvport.Id)
             else:
                 print('\t\t\tView already exists on the sheet.')
 
 
-def copy_sheet_revisions(activedoc, source_sheet, dest_doc, dest_sheet):
-    all_src_revs = query.get_revisions(doc=activedoc)
+def copy_sheet_revisions(sourceDoc, source_view, dest_doc, dest_sheet):
+    all_src_revs = query.get_revisions(doc=sourceDoc)
     all_dest_revs = query.get_revisions(doc=dest_doc)
     revisions_to_set = []
 
     with revit.Transaction('Copy and Set Revisions', doc=dest_doc):
-        for src_revid in source_sheet.GetAdditionalRevisionIds():
-            set_rev = ensure_dest_revision(activedoc.GetElement(src_revid),
+        for src_revid in source_view.GetAdditionalRevisionIds():
+            set_rev = ensure_dest_revision(sourceDoc.GetElement(src_revid),
                                            all_dest_revs,
                                            dest_doc)
             revisions_to_set.append(set_rev)
@@ -507,27 +566,27 @@ def copy_sheet_revisions(activedoc, source_sheet, dest_doc, dest_sheet):
                                                 doc=dest_doc)
 
 
-def copy_sheet_guides(activedoc, source_sheet, dest_doc, dest_sheet):
+def copy_sheet_guides(sourceDoc, source_view, dest_doc, dest_sheet):
     # sheet guide
-    source_sheet_guide_param = \
-        source_sheet.Parameter[DB.BuiltInParameter.SHEET_GUIDE_GRID]
-    source_sheet_guide_element = \
-        activedoc.GetElement(source_sheet_guide_param.AsElementId())
+    source_view_guide_param = \
+        source_view.Parameter[DB.BuiltInParameter.SHEET_GUIDE_GRID]
+    source_view_guide_element = \
+        sourceDoc.GetElement(source_view_guide_param.AsElementId())
     
-    if source_sheet_guide_element:
-        if not find_guide(source_sheet_guide_element.Name, dest_doc):
+    if source_view_guide_element:
+        if not find_guide(source_view_guide_element.Name, dest_doc):
             # copy guides to dest_doc
             cp_options = DB.CopyPasteOptions()
             cp_options.SetDuplicateTypeNamesHandler(CopyUseDestination())
 
             with revit.Transaction('Copy Sheet Guide', doc=dest_doc):
                 DB.ElementTransformUtils.CopyElements(
-                    activedoc,
-                    List[DB.ElementId]([source_sheet_guide_element.Id]),
+                    sourceDoc,
+                    List[DB.ElementId]([source_view_guide_element.Id]),
                     dest_doc, None, cp_options
                     )
 
-        dest_guide = find_guide(source_sheet_guide_element.Name, dest_doc)
+        dest_guide = find_guide(source_view_guide_element.Name, dest_doc)
         if dest_guide:
             # set the guide
             with revit.Transaction('Set Sheet Guide', doc=dest_doc):
@@ -536,43 +595,43 @@ def copy_sheet_guides(activedoc, source_sheet, dest_doc, dest_sheet):
                 dest_sheet_guide_param.Set(dest_guide.Id)
         else:
             logger.error('Error copying and setting sheet guide for sheet {}'
-                         .format(source_sheet.Name))
+                         .format(source_view.Name))
 
 
-def copy_sheet(activedoc, source_sheet, dest_doc):
+def copy_sheet(sourceDoc, source_view, dest_doc):
     logger.debug('Copying sheet {} to document {}'
-                 .format(source_sheet.Name,
+                 .format(source_view.Name,
                          dest_doc.Title))
-    print('\tCopying/updating Sheet: {}'.format(source_sheet.Name))
+    print('\tCopying/updating Sheet: {}'.format(source_view.Name))
     with revit.TransactionGroup('Import Sheet', doc=dest_doc):
         logger.debug('Creating destination sheet...')
-        new_sheet = copy_view(activedoc, source_sheet, dest_doc)
+        new_sheet = copy_view(sourceDoc, source_view, dest_doc)
 
         if new_sheet:
             if not new_sheet.IsPlaceholder:
                 if OPTION_SET.op_copy_vports:
                     logger.debug('Copying sheet viewports...')
-                    copy_sheet_viewports(activedoc, source_sheet,
+                    copy_sheet_viewports(sourceDoc, source_view,
                                          dest_doc, new_sheet)
                 else:
                     print('Skipping viewports...')
 
                 if OPTION_SET.op_copy_guides:
                     logger.debug('Copying sheet guide grids...')
-                    copy_sheet_guides(activedoc, source_sheet,
+                    copy_sheet_guides(sourceDoc, source_view,
                                       dest_doc, new_sheet)
                 else:
                     print('Skipping sheet guides...')
 
             if OPTION_SET.op_copy_revisions:
                 logger.debug('Copying sheet revisions...')
-                copy_sheet_revisions(activedoc, source_sheet,
+                copy_sheet_revisions(sourceDoc, source_view,
                                      dest_doc, new_sheet)
             else:
                 print('Skipping revisions...')
 
         else:
-            logger.error('Failed copying sheet: {}'.format(source_sheet.Name))
+            logger.error('Failed copying sheet: {}'.format(source_view.Name))
 
 #copied code ^
 
@@ -582,9 +641,42 @@ def copy_sheet(activedoc, source_sheet, dest_doc):
 
 
 # start of running code, above is definitions of functions
-OPTION_M_OR_I = metric_or_imperial_options()
+source_doc = metric_or_imperial_options()
+OPTION_SET = get_user_options()
 
+dest_doc = active_doc
+print('destination doc: {}'.format(dest_doc))
 
+print('source doc (loaded in background): {}'.format(source_doc))
+print(source_doc)
+
+#create list to add views from draftviews_collector that have a matching parameter value for the following for loop
+matchedViews = []
+#similar list to spit out names for checking/clarity
+matchedViews_Names = []
+
+print('attempting to launch view selection')
+source_views = get_source_views()
+view_count = len(source_views)
+
+other_try_background_views = get_background_session_views()
+
+total_work = view_count #* doc_count --> would use this if we were copying to more than one document, but we're not
+work_counter = 0
 
 #get_dest_docs() needs to be replaced with "current document"
 #get source stuff needs to be replaced with "backgroundDoc"
+
+output.print_md('**Copying View(s) to Document:** {0}'
+                .format(dest_doc.Title))
+
+for source_view in source_views:
+    print('Copying View: {0} - {1}'.format(source_view.SheetNumber,
+                                     source_view.Name))
+    copy_view(source_doc, source_view, dest_doc)
+    # copy_sheet(revit.doc, source_view, dest_doc) --> function from 'pyrevit copy sheets to open documents
+    work_counter += 1
+    output.update_progress(work_counter, total_work)
+
+output.print_md('**Copied {} views to {}.**'
+                .format(view_count, dest_doc.Title))
