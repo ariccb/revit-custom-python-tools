@@ -79,7 +79,7 @@ corp_gn_path = 'R:\Technical Resources\STR\General Notes and Details\Revit'
 
 
 # Ask if you want imperial or metric notes, load correct path
-def metric_or_imperial_options():
+def load_metric_or_imperial_gn_in_background():
     selected_units = ''
     op_set = MetricOrImperialOptionSet()
     metric_or_imperial = forms.SelectFromList.show(
@@ -159,7 +159,7 @@ def get_current_session_views():
                         #    if len(x.LookupParameter('RJC Standard View ID').ToString()) >= 3]
         return gn_views, all_draftview_names
 
-'''  
+ 
 
 def get_background_session_views():
     drafting_views_to_copy = forms.select_views(
@@ -177,6 +177,17 @@ def get_background_session_views():
 
 
 ### place copied code definitions here (from 'Copy Sheets to Open Documents Pyrevit File)
+'''
+def get_source_views():
+    selected_source_views = forms.select_views(title='Select #### General Notes To Import!',
+                                                doc=source_doc)
+                                                #This is loading "ViewSheet Propterties....don't know why.
+                                                #Check out forms.select_views return values?
+    if not selected_source_views:
+        sys.exit(0)
+    else:
+        return selected_source_views
+'''
 
 def get_source_views(title='Select General Notes To Import',
                  button_name='Import General Notes',
@@ -222,7 +233,7 @@ def get_source_views(title='Select General Notes To Import',
     print(selected_views)
     print('get_source_views results^')
     return selected_views
-
+'''
 
 
 
@@ -641,7 +652,7 @@ def copy_sheet(sourceDoc, source_view, dest_doc):
 
 
 # start of running code, above is definitions of functions
-source_doc = metric_or_imperial_options()
+source_doc = load_metric_or_imperial_gn_in_background()
 OPTION_SET = get_user_options()
 
 dest_doc = active_doc
@@ -657,9 +668,11 @@ matchedViews_Names = []
 
 print('attempting to launch view selection')
 source_views = get_source_views()
+print(source_views)
 view_count = len(source_views)
+print('Loading {} views from Corporate GN File'.format(view_count))
 
-other_try_background_views = get_background_session_views()
+#other_try_background_views = get_background_session_views()
 
 total_work = view_count #* doc_count --> would use this if we were copying to more than one document, but we're not
 work_counter = 0
@@ -671,8 +684,7 @@ output.print_md('**Copying View(s) to Document:** {0}'
                 .format(dest_doc.Title))
 
 for source_view in source_views:
-    print('Copying View: {0} - {1}'.format(source_view.SheetNumber,
-                                     source_view.Name))
+    print('Copying View: {0}'.format(source_view.Name))
     copy_view(source_doc, source_view, dest_doc)
     # copy_sheet(revit.doc, source_view, dest_doc) --> function from 'pyrevit copy sheets to open documents
     work_counter += 1
