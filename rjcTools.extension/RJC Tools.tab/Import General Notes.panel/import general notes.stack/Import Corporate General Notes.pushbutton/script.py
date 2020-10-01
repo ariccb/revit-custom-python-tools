@@ -17,9 +17,9 @@ from pyrevit import forms
 from pyrevit.revit import query
 from Autodesk.Revit.DB import Element as DBElement
 
-__doc__= '''Imports General Notes from the Corporate General Notes Revit File
-            saved in the Resource Folder. It opens the Corporate file in the
-            background as Detached, and loads them into the current Revit file.'''
+__doc__='Imports General Notes from the Corporate General Notes Revit File ' \
+        'saved in the Resource Folder. It opens the Corporate file in the ' \
+        'background as Detached, and loads them into the current Revit file.'
 
 logger = script.get_logger()
 output = script.get_output()
