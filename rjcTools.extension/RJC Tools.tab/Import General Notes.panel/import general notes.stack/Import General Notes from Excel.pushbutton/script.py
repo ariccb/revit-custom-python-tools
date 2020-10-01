@@ -119,11 +119,10 @@ try:
         if param in list_generalnote_ids:
             matchedViews.append(draftview)         # saves the matching views to matchedViews array (the original element types)
             matchedViews_Names.append(draftview.Name)    # saves the view name to the matchedViews_Names array
-    print "Views in project matching the selection form are: ", matchedViews_Names   # prints the seelctedViews_Names array with added view names from ^ for loop (this array was empty prior to the for loop)
+    print ("Views in project matching the selection form are: " + matchedViews_Names)   # prints the selctedViews_Names array with added view names from ^ for loop (this array was empty prior to the for loop)
 
 
 except:
-    print(error)
     print("Looks like your project doesn't have the 'RJC Standard View ID' parameter loaded. This add-in can't continue, so it's exiting.")
 
 

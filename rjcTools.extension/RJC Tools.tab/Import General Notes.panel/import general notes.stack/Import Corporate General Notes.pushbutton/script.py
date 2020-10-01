@@ -122,7 +122,7 @@ def load_metric_or_imperial_gn_in_background():
     if metric_or_imperial == 'Imperial Corporate General Notes': 
         selected_units = 'Imperial'
     
-    logger.debug('Attempting to load the {0} Revit file'.format(metric_or_imperial)))
+    logger.debug('Attempting to load the {0} Revit file'.format(metric_or_imperial))
     final_gn_file_path = check_GN_file_paths(corp_gn_path,selected_units)
     # converts into the file path that Revit can read
     modelPath = DB.ModelPathUtils.ConvertUserVisiblePathToModelPath(final_gn_file_path)
