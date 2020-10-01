@@ -324,6 +324,8 @@ def copy_view(sourceDoc, source_view, dest_doc):
                              .format(source_view.Name))
             else:
                 print('\t\t\t\t\t\tExisting view contents replaced with the latest content from {}'.format(gn_title))
+        else:
+            print('\t\t\t\t\t\tExisting view contents were left untouched, and were \n\t\t\t\t\t\tnot updated with the latest content from {}'.format(gn_title))
 
         return matching_view
 
