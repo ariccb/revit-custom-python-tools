@@ -95,7 +95,7 @@ def load_metric_or_imperial_gn_in_background():
         for file in os.listdir(file_path):
             if fnmatch.fnmatch(file,'STR-STD-00?-*'+units+' Notes - Revit 20??.rvt'):
                 file_path = file_path + '\\' + file
-                print('path after fnmatch check: ' + file_path)
+                logger.debug(file_path) # shows the file path of Corp. GN file after passing the fnmatch command
                 if not os.path.isfile(file_path):                    
                     alert('The path to the {} Revit file needs to be updated, please select the correct file'.format(metric_or_imperial))
                     new_file_path = pyrevit.forms.pick_file(file_ext='rvt', \
@@ -105,7 +105,8 @@ def load_metric_or_imperial_gn_in_background():
                     print('the new selected file to be loaded in background is: ' + new_file_path)
                     return new_file_path
                 else:
-                    print('Loading... ' + file_path)
+                    output.print_md('**Loading... ** {}'.format(metric_or_imperial))
+                    output.print_md('**From: ** {}'.format(file_path))
                     return file_path
         
     if not metric_or_imperial:
@@ -121,66 +122,22 @@ def load_metric_or_imperial_gn_in_background():
     if metric_or_imperial == 'Imperial Corporate General Notes': 
         selected_units = 'Imperial'
     
-    print('Attempting to load the ' + metric_or_imperial + ' Revit file')
+    logger.debug('Attempting to load the {0} Revit file'.format(metric_or_imperial)))
     final_gn_file_path = check_GN_file_paths(corp_gn_path,selected_units)
     # converts into the file path that Revit can read
     modelPath = DB.ModelPathUtils.ConvertUserVisiblePathToModelPath(final_gn_file_path)
-    backgroundDoc = app.OpenDocumentFile(modelPath, options)
-    print(backgroundDoc)
-    
+    backgroundDoc = app.OpenDocumentFile(modelPath, options)     
 
-    print('The ' + metric_or_imperial + ' Revit file has been loaded in the backgorund. Below should be same as source_doc')
-    print(backgroundDoc)
+    print('The ' + metric_or_imperial + ' Revit file has been loaded in the background')
+    logger.debug('Background document object: {}'.format(backgroundDoc))
 
-    return backgroundDoc
-
-'''
-def get_current_session_views():
-    # get all views and collect names of current doc
-    #draftviews_collector = DB.FilteredElementCollector(dest_doc).OfClass(DB.ViewDrafting).ToElements()
-    all_graphviews = revit.query.get_all_views(doc=dest_doc)
-    gn_views = []
-    for element in all_graphviews:
-        targetparam = element.LookupParameter('RJC Standard View ID')
-        if targetparam:
-            
-            and value is not None \
-        
+    return backgroundDoc, metric_or_imperial
 
 
-
-        element.LookupParameter(param_name)('RJC Standard View ID', param_value,\
-                                    doc=backgroundDoc, partial=False)
-        #print(gn_views)
-        all_draftview_names = [revit.query.get_name(x)
-                            for x in all_graphviews
-                            if x.ViewType == DB.ViewType.DraftingView]
-                        #    if x.LookupParameter('RJC Standard View ID') != None
-                        #    if len(x.LookupParameter('RJC Standard View ID').ToString()) >= 3]
-        return gn_views, all_draftview_names
-
- 
-
-def get_background_session_views():
-    drafting_views_to_copy = forms.select_views(
-        title='General Notes to Import',
-        doc=source_doc,
-        filterfunc=lambda x: x.ViewType == DB.ViewType.DraftingView)
-
-    if drafting_views_to_copy:
-        # iterate over interfacetypes drafting views
-        for src_drafting in drafting_views_to_copy:
-            print(src_drafting)
-            logger.debug('Copying %s', revit.query.get_name(src_drafting))
-
-            # get drafting view elements and exclude non-copyable elements
-
-
-### place copied code definitions here (from 'Copy Sheets to Open Documents Pyrevit File)
-'''
 def get_source_views():
-    selected_source_views = forms.select_views(title='Select #### General Notes To Import!',
-                                                doc=source_doc)
+    selected_source_views = forms.select_views(title='Select Views To Import From {}'.format(gn_title),
+                                                doc=source_doc,
+                                                width=700)
                                                 #This is loading "ViewSheet Propterties....don't know why.
                                                 #Check out forms.select_views return values?
                                                 #I think i just need to remove the Titleblock optionset out!!
@@ -188,54 +145,6 @@ def get_source_views():
         sys.exit(0)
     else:
         return selected_source_views
-'''
-
-def get_source_views(title='Select General Notes To Import',
-                 button_name='Import General Notes',
-                 width=forms.DEFAULT_INPUTWINDOW_WIDTH,
-                 multiple=True,
-                 filterfunc=None,
-                 doc=None):
-    
-    """Standard form for selecting General Notes.
-
-    Args:
-        title (str, optional): list window title
-        button_name (str, optional): list window button caption
-        width (int, optional): width of list window
-        multiselect (bool, optional):
-            allow multi-selection (uses check boxes). defaults to True
-        filterfunc (function):
-            filter function to be applied to context items.
-        doc (DB.Document, optional):
-            source document for views; defaults to active document
-    Returns:
-        list[DB.View]: list of selected views
-    """
-    
-    all_graphviews = revit.query.get_all_views(doc=source_doc)
-
-    if filterfunc:
-        all_graphviews = filter(filterfunc, all_graphviews)
-
-    selected_views = forms.SelectFromList.show(
-        sorted([forms.ViewOption(x) for x in all_graphviews],
-               key=lambda x: x.name),
-        title=title,
-        button_name=button_name,
-        width=width,
-        multiselect=multiple,
-        checked_only=True
-        )
-
-    if not selected_views:
-        sys.exit(0)
-
-    print(selected_views)
-    print('get_source_views results^')
-    return selected_views
-'''
-
 
 
 def get_user_options():
@@ -283,7 +192,6 @@ def find_matching_view(dest_doc, source_view):
     for v in DB.FilteredElementCollector(dest_doc).OfClass(DB.View):
         if v.ViewType == source_view.ViewType \
                 and query.get_name(v) == query.get_name(source_view):
-            print('MATCHING VIEW!')
             if source_view.ViewType == DB.ViewType.DrawingSheet:
                 if v.SheetNumber == source_view.SheetNumber:
                     return v
@@ -405,7 +313,7 @@ def copy_view_props(source_view, dest_view):
 def copy_view(sourceDoc, source_view, dest_doc):
     matching_view = find_matching_view(dest_doc, source_view)
     if matching_view:
-        print('\t\t\tView/Sheet already exists in document.')
+        print('\t\t\tView/Sheet already exists in {}'.format(source_view.Name))
         if OPTION_SET.op_update_exist_view_contents:
             if not copy_view_contents(sourceDoc,
                                       source_view,
@@ -414,6 +322,8 @@ def copy_view(sourceDoc, source_view, dest_doc):
                                       clear_contents=True):
                 logger.error('Could not copy view contents: {}'
                              .format(source_view.Name))
+            else:
+                print('\t\t\t\t\t\tExisting view contents replaced with the latest content from {}'.format(gn_title))
 
         return matching_view
 
@@ -654,25 +564,22 @@ def copy_sheet(sourceDoc, source_view, dest_doc):
 
 
 # start of running code, above is definitions of functions
-source_doc = load_metric_or_imperial_gn_in_background()
+source_doc, gn_title = load_metric_or_imperial_gn_in_background()
 OPTION_SET = get_user_options()
 
 dest_doc = active_doc
-print('destination doc: {}'.format(dest_doc))
-
-print('source doc (loaded in background): {}'.format(source_doc))
-print(source_doc)
+logger.debug('destination doc: {}'.format(dest_doc))
+logger.debug('source doc (loaded in background): {}'.format(source_doc))
 
 #create list to add views from draftviews_collector that have a matching parameter value for the following for loop
 matchedViews = []
 #similar list to spit out names for checking/clarity
 matchedViews_Names = []
 
-print('attempting to launch view selection')
 source_views = get_source_views()
-print(source_views)
+# print(source_views) # uncomment to see what the source view objects look like
 view_count = len(source_views)
-print('Loading {} views from Corporate GN File'.format(view_count))
+output.print_md('Loading **{}** views from {}'.format(view_count, gn_title))
 
 #other_try_background_views = get_background_session_views()
 
@@ -687,7 +594,6 @@ output.print_md('**Copying View(s) to Document:** {0}'
 
 for source_view in source_views:
     print('Copying View: {0}'.format(source_view.Name))
-    print(source_view.Id)
     copy_view(source_doc, source_view, dest_doc)
     # copy_sheet(revit.doc, source_view, dest_doc) --> function from 'pyrevit copy sheets to open documents
     work_counter += 1
@@ -695,3 +601,4 @@ for source_view in source_views:
 
 output.print_md('**Copied {} views to {}.**'
                 .format(view_count, dest_doc.Title))
+output.print_md('**GENERAL NOTE IMPORT COMPLETE**')
