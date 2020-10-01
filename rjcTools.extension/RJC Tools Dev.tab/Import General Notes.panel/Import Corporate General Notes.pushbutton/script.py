@@ -15,6 +15,7 @@ from pyrevit import revit, DB
 from pyrevit import script
 from pyrevit import forms
 from pyrevit.revit import query
+from Autodesk.Revit.DB import Element as DBElement
 
 __doc__= '''Imports General Notes from the Corporate General Notes Revit File
             saved in the Resource Folder. It opens the Corporate file in the
@@ -28,6 +29,7 @@ options.DetachFromCentralOption = options.DetachFromCentralOption.DetachAndPrese
 
 app = __revit__.Application
 active_doc = __revit__.ActiveUIDocument.Document
+
 VIEW_TOS_PARAM = DB.BuiltInParameter.VIEW_DESCRIPTION
 
 class CopyUseDestination(DB.IDuplicateTypeNamesHandler):
@@ -42,7 +44,6 @@ class Option(forms.TemplateListItem):
 
 class OptionSet:
     def __init__(self):
-        '''
         self.op_copy_vports = Option('Copy Viewports', True)
         self.op_copy_schedules = Option('Copy Schedules', True)
         self.op_copy_titleblock = Option('Copy Sheet Titleblock', True)
@@ -50,7 +51,6 @@ class OptionSet:
         self.op_copy_placeholders_as_sheets = \
             Option('Copy Placeholders as Sheets', True)
         self.op_copy_guides = Option('Copy Guide Grids', True)
-        '''
         self.op_update_exist_view_contents = \
             Option('Update Existing View Contents')
 
@@ -183,6 +183,7 @@ def get_source_views():
                                                 doc=source_doc)
                                                 #This is loading "ViewSheet Propterties....don't know why.
                                                 #Check out forms.select_views return values?
+                                                #I think i just need to remove the Titleblock optionset out!!
     if not selected_source_views:
         sys.exit(0)
     else:
@@ -282,6 +283,7 @@ def find_matching_view(dest_doc, source_view):
     for v in DB.FilteredElementCollector(dest_doc).OfClass(DB.View):
         if v.ViewType == source_view.ViewType \
                 and query.get_name(v) == query.get_name(source_view):
+            print('MATCHING VIEW!')
             if source_view.ViewType == DB.ViewType.DrawingSheet:
                 if v.SheetNumber == source_view.SheetNumber:
                     return v
@@ -685,6 +687,7 @@ output.print_md('**Copying View(s) to Document:** {0}'
 
 for source_view in source_views:
     print('Copying View: {0}'.format(source_view.Name))
+    print(source_view.Id)
     copy_view(source_doc, source_view, dest_doc)
     # copy_sheet(revit.doc, source_view, dest_doc) --> function from 'pyrevit copy sheets to open documents
     work_counter += 1
