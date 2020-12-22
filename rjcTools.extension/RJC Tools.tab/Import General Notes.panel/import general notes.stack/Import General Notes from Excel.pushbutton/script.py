@@ -111,19 +111,27 @@ matchedViews = []
 #similar list to spit out names for checking/clarity
 matchedViews_Names = []
 
-input('What General Note View ID Should I try to load?')
+# input('What General Note View ID Should I try to load?')
 #lookup the parameter 'RJC Standard View ID', using .AsString to get the value instead of just the Parameter, and add views to list if it matches any values in 'list_generalnote_ids'
-try: 
-    for draftview in draftviews_collector: #creates a loop and iterates the following code through each instance in the list 'draftviews_collector' using draftview as the variable
-        param = draftview.LookupParameter('RJC Standard View ID').AsString()
-        if param in list_generalnote_ids:
-            matchedViews.append(draftview)         # saves the matching views to matchedViews array (the original element types)
-            matchedViews_Names.append(draftview.Name)    # saves the view name to the matchedViews_Names array
-    print ("Views in project matching the selection form are: " + matchedViews_Names)   # prints the selctedViews_Names array with added view names from ^ for loop (this array was empty prior to the for loop)
+# try: 
+#     for draftview in draftviews_collector: #creates a loop and iterates the following code through each instance in the list 'draftviews_collector' using draftview as the variable
+#         param = draftview.LookupParameter('RJC Standard View ID').AsString()
+#         if param in list_generalnote_ids:
+#             matchedViews.append(draftview)         # saves the matching views to matchedViews array (the original element types)
+#             matchedViews_Names.append(draftview.Name)    # saves the view name to the matchedViews_Names array
+#             print(matchedViews_Names)
+#     print ("Views in project matching the selection form are: " + matchedViews_Names)   # prints the selctedViews_Names array with added view names from ^ for loop (this array was empty prior to the for loop)
 
-
-except:
-    print("Looks like your project doesn't have the 'RJC Standard View ID' parameter loaded. This add-in can't continue, so it's exiting.")
+for draftview in draftviews_collector: #creates a loop and iterates the following code through each instance in the list 'draftviews_collector' using draftview as the variable
+    param = draftview.LookupParameter('General Notes ID Number').AsString()
+    if param in list_generalnote_ids:
+        matchedViews.append(draftview)         # saves the matching views to matchedViews array (the original element types)
+        matchedViews_Names.append(draftview.Name)    # saves the view name to the matchedViews_Names array
+    
+print ("Views in project matching the selection form are: ")   # prints the selctedViews_Names array with added view names from ^ for loop (this array was empty prior to the for loop)
+print (matchedViews_Names)
+# except:
+#     print("Looks like your project doesn't have the 'General Notes ID Number' parameter loaded. This add-in can't continue, so it's exiting.")
 
 
 
@@ -132,3 +140,8 @@ except:
 t.Commit()
  
 
+# need to update this program to:
+# - Ask User for Metric or Imperial Version to Import
+# - Search the Corporate File for matched "RJC Standard View ID" instead of the currently open 'doc'
+# - Copy Views from Corporate File using "RJC Standard View ID" Parameter
+# - Create the Project Paramter if it doesn't exist in the project

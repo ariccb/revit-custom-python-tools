@@ -45,12 +45,12 @@ class Option(forms.TemplateListItem):
 class OptionSet:
     def __init__(self):
         self.op_copy_vports = Option('Copy Viewports', True)
-        self.op_copy_schedules = Option('Copy Schedules', True)
-        self.op_copy_titleblock = Option('Copy Sheet Titleblock', True)
-        self.op_copy_revisions = Option('Copy and Set Sheet Revisions', False)
-        self.op_copy_placeholders_as_sheets = \
-            Option('Copy Placeholders as Sheets', True)
-        self.op_copy_guides = Option('Copy Guide Grids', True)
+        # self.op_copy_schedules = Option('Copy Schedules', True)
+        # self.op_copy_titleblock = Option('Copy Sheet Titleblock', True)
+        # self.op_copy_revisions = Option('Copy and Set Sheet Revisions', False)
+        # self.op_copy_placeholders_as_sheets = \
+        #     Option('Copy Placeholders as Sheets', True)
+        # self.op_copy_guides = Option('Copy Guide Grids', True)
         self.op_update_exist_view_contents = \
             Option('Update Existing View Contents')
 
