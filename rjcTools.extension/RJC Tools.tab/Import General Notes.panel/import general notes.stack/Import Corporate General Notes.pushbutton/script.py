@@ -4,7 +4,7 @@ import os
 import fnmatch
 
 import pyrevit
-from pyrevit.forms import alert
+from pyrevit.forms import ParamDef, alert
 sys.path.insert(0,'C:\Program Files (x86)\IronPython 2.7\Lib')
 
 import traceback
@@ -42,9 +42,9 @@ class Option(forms.TemplateListItem):
         super(Option, self).__init__(op_name)
         self.state = default_state
 
-class OptionSet:
+class ViewsOptionSet:
     def __init__(self):
-        self.op_copy_vports = Option('Copy Viewports', True)
+        # self.op_copy_vports = Option('Copy Viewports', True)
         # self.op_copy_schedules = Option('Copy Schedules', True)
         # self.op_copy_titleblock = Option('Copy Sheet Titleblock', True)
         # self.op_copy_revisions = Option('Copy and Set Sheet Revisions', False)
@@ -52,7 +52,7 @@ class OptionSet:
         #     Option('Copy Placeholders as Sheets', True)
         # self.op_copy_guides = Option('Copy Guide Grids', True)
         self.op_update_exist_view_contents = \
-            Option('Update Existing View Contents')
+            Option('Update Existing Views From Corporate General Notes \n(Overwrites Corresponding Views)')
 
 
 class MetricOrImperialOptionSet:
@@ -142,13 +142,14 @@ def get_source_views():
                                                 #Check out forms.select_views return values?
                                                 #I think i just need to remove the Titleblock optionset out!!
     if not selected_source_views:
+        print('No views were selected to import so the script was terminated.')
         sys.exit(0)
     else:
         return selected_source_views
 
 
-def get_user_options():
-    op_set = OptionSet()
+def get_user_options_for_views():
+    op_set = ViewsOptionSet()
     return_options = \
         forms.SelectFromList.show(
             [getattr(op_set, x) for x in dir(op_set) if x.startswith('op_')],
@@ -156,33 +157,29 @@ def get_user_options():
             button_name='Copy Now',
             multiselect=True
             )
-
-    if not return_options:
-        sys.exit(0)
-
     return op_set
 
-### DON'T NEED THIS BECAUSE OUR DESTINATION IS THE CURRENT DOC.
-# def get_dest_docs():
-#     # find open documents other than the active doc
-#     selected_dest_docs = \
-#         forms.select_open_docs(title='Select Destination Documents')
-#     if not selected_dest_docs:
-#         sys.exit(0)
-#     else:
-#         return selected_dest_docs
+# def get_user_options_for_sheets():
+#     op_set = SheetsOptionSet()
+#     return_options = \
+#         forms.SelectFromList.show(
+#             [getattr(op_set, x) for x in dir(op_set) if x.startswith('op_')],
+#             title='Select Copy Options',
+#             button_name='Copy Now',
+#             multiselect=True
+#             )
+#     return op_set
 
-
-### DON'T NEED THIS BECAUSE WE'RE LOADING THE VIEWS FROM A DIFFERENT DOCUMENT (FUNCTION DEF BELOW)
-# def get_source_views():
-#     view_elements = forms.select_sheets(button_name='Copy Sheets',
-#                                          use_selection=True)
-
-#     if not view_elements:
-#         sys.exit(0)
-
-#     return view_elements
-
+# def get_user_options_for_sheets_and_views():
+#     op_set = SheetsViewsOptionSet()
+#     return_options = \
+#         forms.SelectFromList.show(
+#             [getattr(op_set, x) for x in dir(op_set) if x.startswith('op_')],
+#             title='Select Copy Options',
+#             button_name='Copy Now',
+#             multiselect=True
+#             )
+#     return op_set
 
 def get_default_type(source_doc, type_group):
     return source_doc.GetDefaultElementTypeId(type_group)
@@ -221,10 +218,10 @@ def get_view_contents(dest_doc, source_view):
     elements_ids = []
     for element in view_elements:
         if (element.Category and element.Category.Name == 'Title Blocks') \
-                and not OPTION_SET.op_copy_titleblock:
+                and not COPY_VIEWS_OPTION_SET.op_copy_titleblock:
             continue
         elif isinstance(element, DB.ScheduleSheetInstance) \
-                and not OPTION_SET.op_copy_schedules:
+                and not COPY_VIEWS_OPTION_SET.op_copy_schedules:
             continue
         elif isinstance(element, DB.Viewport) \
                 or 'ExtentElem' in query.get_name(element):
@@ -299,6 +296,7 @@ def copy_view_contents(sourceDoc, source_view, dest_doc, dest_view,
                 List[DB.ElementId](elements_ids),
                 dest_view, None, cp_options
                 )
+            copy_view_props(source_view, dest_view)
 
     return True
 
@@ -308,13 +306,23 @@ def copy_view_props(source_view, dest_view):
     dest_view.Parameter[VIEW_TOS_PARAM].Set(
         source_view.Parameter[VIEW_TOS_PARAM].AsString()
     )
+    print(source_view.LookupParameter('RJC Office ID').AsString())
+    print(source_view.LookupParameter('RJC Standard View ID').AsString())
+
+    dest_view.LookupParameter('RJC Office ID').Set(
+        source_view.LookupParameter('RJC Office ID').AsString()
+    )
+    dest_view.LookupParameter('RJC Standard View ID').Set(
+        source_view.LookupParameter('RJC Standard View ID').AsString()
+    )
+   
 
 
 def copy_view(sourceDoc, source_view, dest_doc):
     matching_view = find_matching_view(dest_doc, source_view)
     if matching_view:
         print('\t\t\tView/Sheet already exists in {}'.format(source_view.Name))
-        if OPTION_SET.op_update_exist_view_contents:
+        if COPY_VIEWS_OPTION_SET.op_update_exist_view_contents:
             if not copy_view_contents(sourceDoc,
                                       source_view,
                                       dest_doc,
@@ -340,7 +348,7 @@ def copy_view(sourceDoc, source_view, dest_doc):
             with revit.Transaction('Create Sheet', doc=dest_doc):
                 if not source_view.IsPlaceholder \
                         or (source_view.IsPlaceholder
-                                and OPTION_SET.op_copy_placeholders_as_sheets):
+                                and COPY_VIEWS_OPTION_SET.op_copy_placeholders_as_sheets):
                     new_view = \
                         DB.ViewSheet.Create(
                             dest_doc,
@@ -534,21 +542,21 @@ def copy_sheet(sourceDoc, source_view, dest_doc):
 
         if new_sheet:
             if not new_sheet.IsPlaceholder:
-                if OPTION_SET.op_copy_vports:
+                if COPY_VIEWS_OPTION_SET.op_copy_vports:
                     logger.debug('Copying sheet viewports...')
                     copy_sheet_viewports(sourceDoc, source_view,
                                          dest_doc, new_sheet)
                 else:
                     print('Skipping viewports...')
 
-                if OPTION_SET.op_copy_guides:
+                if COPY_VIEWS_OPTION_SET.op_copy_guides:
                     logger.debug('Copying sheet guide grids...')
                     copy_sheet_guides(sourceDoc, source_view,
                                       dest_doc, new_sheet)
                 else:
                     print('Skipping sheet guides...')
 
-            if OPTION_SET.op_copy_revisions:
+            if COPY_VIEWS_OPTION_SET.op_copy_revisions:
                 logger.debug('Copying sheet revisions...')
                 copy_sheet_revisions(sourceDoc, source_view,
                                      dest_doc, new_sheet)
@@ -558,16 +566,16 @@ def copy_sheet(sourceDoc, source_view, dest_doc):
         else:
             logger.error('Failed copying sheet: {}'.format(source_view.Name))
 
-#copied code ^
 
-
-
-
-
-
+###############################################################
 # start of running code, above is definitions of functions
 source_doc, gn_title = load_metric_or_imperial_gn_in_background()
-OPTION_SET = get_user_options()
+
+#if :       when putting in the option for importing full sheets or views 
+COPY_VIEWS_OPTION_SET = get_user_options_for_views()                    
+
+#COPY_SHEETS_OPTION_SET = get_user_options_for_sheets()
+#COPY_SHEETS_AND_VIEWS_OPTION_SET = get_user_options_for_sheets_and_views()
 
 dest_doc = active_doc
 logger.debug('destination doc: {}'.format(dest_doc))
