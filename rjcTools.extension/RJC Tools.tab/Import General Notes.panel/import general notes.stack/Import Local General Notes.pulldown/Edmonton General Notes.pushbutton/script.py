@@ -1,6 +1,11 @@
 #import libraries and reference the RevitAPI and RevitAPIUI
 import clr
-import math
+import System
+
+clr.AddReference("Microsoft.Office.Interop.Excel")
+import Microsoft.Office.Interop.Excel as Excel
+excel = Excel.ApplicationClass()
+
 clr.AddReference('RevitAPI') 
 clr.AddReference('RevitAPIUI') 
 from Autodesk.Revit.DB import * 
@@ -11,13 +16,14 @@ app = __revit__.Application
 doc = __revit__.ActiveUIDocument.Document
  
 #define a transaction variable and describe the transaction
-t = Transaction(doc, 'This is my new transaction')
+t = Transaction(doc, 'Import General Notes')
  
 #start a transaction in the Revit database
 t.Start()
  
 #perform some action here...
-print("I see you've tried to run the Import General Notes Tool.\nIt's still a work in progress, but it's going to be EPIC!\nSo please hang tight, it'll be released hopefully soon!")
+print("I see you've tried to run the Import General Notes Tool.\nIt's still a work in progress, and we haven't set up Edmonton's Local General Notes yet with the tool")
+
 #commit the transaction to the Revit database
 t.Commit()
  
