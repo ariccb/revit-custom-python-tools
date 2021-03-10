@@ -43,7 +43,7 @@ cal_gn_path = 'R:\Office Services\CAL\STR\Cal Project Resources\_Production Reso
 
 def select_file():
     dlgOpen = OpenFileDialog()   
-    dlgOpen.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) ##THIS ISN'T WORKING, NOT STARTING DIALOG AT CENTRAL FILE LOCATION
+    dlgOpen.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) ##THIS ISN'T WORKING, NOT STARTING DIALOG AT CENTRAL FILE LOCATION (by using the doc_path variable)
     dlgOpen.ShowDialog()
     file_name = dlgOpen.FileName  
     return file_name
