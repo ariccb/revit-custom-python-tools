@@ -28,7 +28,7 @@ from System.Drawing import*
 
 app = __revit__.Application
 doc = __revit__.ActiveUIDocument.Document
-__title__='Import General\nNotes From\nExcel'
+__title__='Import Corporate General\nNotes From\nExcel'
 
 user_excel_file_path = ''
 doc_path = str(BasicFileInfo.Extract(doc.PathName).CentralPath)
@@ -82,7 +82,7 @@ def read_excel_general_notes_form():
             list_generalnote_ids.append(workbook.Worksheets(worksheet).Cells(i, 2).Text)
         if(data == ''):
             continue            
-    print "The selected views in the form are: ", list_generalnote_ids #print which ones were checked in the excel file 
+    print ("The selected views in the form are: ", list_generalnote_ids) #print which ones were checked in the excel file 
     return list_generalnote_ids     # returning the list of general note id numbers
 
 list_generalnote_ids = read_excel_general_notes_form()    #assigning the list from read_general_notes_form() return value to a variable to be used later in the code
@@ -123,7 +123,7 @@ matchedViews_Names = []
 #     print ("Views in project matching the selection form are: " + matchedViews_Names)   # prints the selctedViews_Names array with added view names from ^ for loop (this array was empty prior to the for loop)
 
 for draftview in draftviews_collector: #creates a loop and iterates the following code through each instance in the list 'draftviews_collector' using draftview as the variable
-    param = draftview.LookupParameter('General Notes ID Number').AsString()
+    param = draftview.LookupParameter('RJC Standard View ID').AsString()
     if param in list_generalnote_ids:
         matchedViews.append(draftview)         # saves the matching views to matchedViews array (the original element types)
         matchedViews_Names.append(draftview.Name)    # saves the view name to the matchedViews_Names array
@@ -131,7 +131,7 @@ for draftview in draftviews_collector: #creates a loop and iterates the followin
 print ("Views in project matching the selection form are: ")   # prints the selctedViews_Names array with added view names from ^ for loop (this array was empty prior to the for loop)
 print (matchedViews_Names)
 # except:
-#     print("Looks like your project doesn't have the 'General Notes ID Number' parameter loaded. This add-in can't continue, so it's exiting.")
+#     print("Looks like your project doesn't have the 'RJC Standard View ID' parameter loaded. This add-in can't continue, so it's exiting.")
 
 
 
