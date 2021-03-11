@@ -22,7 +22,7 @@ t = Transaction(doc, 'Import General Notes')
 t.Start()
  
 #perform some action here...
-print("I see you've tried to run the Import General Notes Tool.\nIt's still a work in progress, and we havne't set up Toronto's Local General Notes yet with the tool")
+print("I see you've tried to run the Import General Notes Tool.\nIt's still a work in progress, and we haven't set up Toronto's Local General Notes yet with the tool")
 
 #commit the transaction to the Revit database
 t.Commit()
