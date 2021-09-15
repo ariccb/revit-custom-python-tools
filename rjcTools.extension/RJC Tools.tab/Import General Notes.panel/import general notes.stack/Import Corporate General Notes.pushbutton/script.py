@@ -359,18 +359,25 @@ def copy_view_props(source_view, dest_view):
     # print(source_view.LookupParameter('RJC Office ID').AsString())
     # print(source_view.LookupParameter('RJC Standard View ID').AsString())
 
-    dest_view.LookupParameter('RJC Office ID').Set(
-        source_view.LookupParameter('RJC Office ID').AsString()
-    )
-    dest_view.LookupParameter('RJC Standard View ID').Set(
-        source_view.LookupParameter('RJC Standard View ID').AsString()
-    )
-    dest_view.LookupParameter('View Classification').Set(
-        source_view.LookupParameter('View Classification').AsString()
-    )
-    dest_view.LookupParameter('View Type').Set(               
-        source_view.LookupParameter('View Type').AsString()  # this was the line that is causing the "NoneType Error for the "DB.ElementTransformUtils.CopyElements()"" error (because 'View Type' was just 'View')
-    )
+    try:
+        dest_view.LookupParameter('RJC Office ID').Set(source_view.LookupParameter('RJC Office ID').AsString())
+    except:
+        print('No "RJC Office ID" parameter set in source view')
+
+    try:
+        dest_view.LookupParameter('RJC Standard View ID').Set(source_view.LookupParameter('RJC Standard View ID').AsString())
+    except:
+        print('No "RJC Standard View ID" parameter set in source view')
+
+    try:
+        dest_view.LookupParameter('View Classification').Set(source_view.LookupParameter('View Classification').AsString())
+    except:
+        print('No "View Classification" parameter set in source view')
+
+    try:
+        dest_view.LookupParameter('View Type').Set(source_view.LookupParameter('View Type').AsString())  # this was the line that is causing the "NoneType Error for the "DB.ElementTransformUtils.CopyElements()"" error (because 'View Type' was just 'View')
+    except:
+        print('No "View Type" parameter set in source view')
    
 
 
