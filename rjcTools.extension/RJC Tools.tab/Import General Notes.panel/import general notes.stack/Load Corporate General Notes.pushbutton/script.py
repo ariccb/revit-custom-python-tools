@@ -353,11 +353,9 @@ def copy_view_contents(sourceDoc, source_view, dest_doc, dest_view,
 
 def copy_view_props(source_view, dest_view):
     dest_view.Scale = source_view.Scale
-    dest_view.Parameter[VIEW_TOS_PARAM].Set(
-        source_view.Parameter[VIEW_TOS_PARAM].AsString()
-    )
-    # print(source_view.LookupParameter('RJC Office ID').AsString())
-    # print(source_view.LookupParameter('RJC Standard View ID').AsString())
+    dest_view.Parameter[VIEW_TOS_PARAM].Set(source_view.Parameter[VIEW_TOS_PARAM].AsString())
+
+    # if(source_view.LookupParameter('RJC Office ID') is None):
 
     try:
         dest_view.LookupParameter('RJC Office ID').Set(source_view.LookupParameter('RJC Office ID').AsString())
