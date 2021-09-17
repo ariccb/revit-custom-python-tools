@@ -204,7 +204,7 @@ def get_user_options_for_draftingview_only_import_settings():
         forms.SelectFromList.show(
             [getattr(op_set, x) for x in dir(op_set) if x.startswith('op_')],
             title='Select Import Options',
-            button_name='Import Now',
+            button_name='Accept Selection',
             multiselect=True,
             height=225
             )
@@ -216,7 +216,7 @@ def get_user_options_for_sheets_only_import_settings():
         forms.SelectFromList.show(
             [getattr(op_set, x) for x in dir(op_set) if x.startswith('op_')],
             title='Select Import Options',
-            button_name='Import Now',
+            button_name='Accept Selection',
             multiselect=True
             )
     return op_set
@@ -249,7 +249,6 @@ def find_guide(guide_name, source_doc):
     for guide in guide_elements:
         if str(guide.Name).lower() == guide_name.lower():
             return guide
-
 
 def get_view_contents(dest_doc, source_view):
     view_elements = DB.FilteredElementCollector(dest_doc, source_view.Id)\
@@ -351,12 +350,26 @@ def copy_view_contents(sourceDoc, source_view, dest_doc, dest_view,
 # 		    continue
 #     return paramValue
 
+
+##---------------trying to convert code from C# to python here - from https://spiderinnet.typepad.com/blog/2011/05/parameter-of-revit-api-31-create-project-parameter.html
+# def raw_create_project_parameter(app, name, category_set, built_in_parameter_group, inst):
+#     defFile = app.OpenSharedParameterFile()
+#     if(defFile == None):
+#         logger.error('Error: No SharedParameter File in project!')
+    
+#     selection = [] 
+#     for definition_group in defFile:
+#         for external_definition in definition_group.Definitions:
+#             if(external_definition.Name == name):
+#                 selection.append(external_definition)
+#     if(selection == None or len(selection) < 1):
+#         logger.error('Invalid Name Input')
+    
 def copy_view_props(source_view, dest_view):
     dest_view.Scale = source_view.Scale
     dest_view.Parameter[VIEW_TOS_PARAM].Set(source_view.Parameter[VIEW_TOS_PARAM].AsString())
 
     # if(source_view.LookupParameter('RJC Office ID') is None):
-
     try:
         dest_view.LookupParameter('RJC Office ID').Set(source_view.LookupParameter('RJC Office ID').AsString())
     except:
