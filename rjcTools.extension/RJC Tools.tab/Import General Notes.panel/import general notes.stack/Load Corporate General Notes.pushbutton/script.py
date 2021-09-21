@@ -11,7 +11,7 @@ import traceback
 
 
 from pyrevit.framework import List
-from pyrevit import revit, DB
+from pyrevit import revit, DB, UI
 from pyrevit import script
 from pyrevit import forms
 from pyrevit.revit import query
@@ -352,43 +352,61 @@ def copy_view_contents(sourceDoc, source_view, dest_doc, dest_view,
 
 
 ##---------------trying to convert code from C# to python here - from https://spiderinnet.typepad.com/blog/2011/05/parameter-of-revit-api-31-create-project-parameter.html
-# def raw_create_project_parameter(app, name, category_set, built_in_parameter_group, inst):
-#     defFile = app.OpenSharedParameterFile()
-#     if(defFile == None):
-#         logger.error('Error: No SharedParameter File in project!')
-    
-#     selection = [] 
-#     for definition_group in defFile:
-#         for external_definition in definition_group.Definitions:
-#             if(external_definition.Name == name):
-#                 selection.append(external_definition)
-#     if(selection == None or len(selection) < 1):
-#         logger.error('Invalid Name Input')
-    
+
+def CreateProjectParameterFromExistingSharedParameter(app, name, category_set, built_in_parameter_group, inst):
+    defFile = app.OpenSharedParameterFile()
+    if(defFile == None):
+        logger.error('Error: No SharedParameter File in project!')
+
+    selection = [] 
+    for dg in defFile.Groups:
+        for d in dg.Definitions: 
+            if(d.Name == name):
+                selection.append(d)
+    if(selection == None or len(selection) < 1):
+        logger.error('Error with RJC Shared Parameter File. Please check if it\'s correctly loaded into your project.')
+    extdef = selection[0]
+    binding = app.Create.NewTypeBinding(category_set)
+    if(inst):
+        binding = app.Create.NewInstanceBinding(category_set)
+    binding_map = UI.UIApplication(app).ActiveUIDocument.Document.ParameterBindings
+    binding_map.Insert(extdef, binding, built_in_parameter_group)
+
 def copy_view_props(source_view, dest_view):
     dest_view.Scale = source_view.Scale
-    dest_view.Parameter[VIEW_TOS_PARAM].Set(source_view.Parameter[VIEW_TOS_PARAM].AsString())
-
-    # if(source_view.LookupParameter('RJC Office ID') is None):
+    dest_view.Parameter[VIEW_TOS_PARAM].Set(
+        source_view.Parameter[VIEW_TOS_PARAM].AsString()
+    )
+    # print(source_view.LookupParameter('RJC Office ID').AsString())
+    # print(source_view.LookupParameter('RJC Standard View ID').AsString())
+    views = (DB.Category.GetCategory(active_doc, DB.BuiltInCategory.OST_Views))
+    cats1 = app.Create.NewCategorySet()
+    cats1.Insert(views)
     try:
         dest_view.LookupParameter('RJC Office ID').Set(source_view.LookupParameter('RJC Office ID').AsString())
     except:
         print('No "RJC Office ID" parameter in destination view')
-
+        CreateProjectParameterFromExistingSharedParameter(app, "RJC Office ID", cats1, DB.BuiltInParameterGroup.PG_DATA, False);
+        
     try:
         dest_view.LookupParameter('RJC Standard View ID').Set(source_view.LookupParameter('RJC Standard View ID').AsString())
     except:
         print('No "RJC Standard View ID" parameter in destination view')
+        CreateProjectParameterFromExistingSharedParameter(app, "RJC Standard View ID", cats1, DB.BuiltInParameterGroup.PG_DATA, False);
 
     try:
         dest_view.LookupParameter('View Classification').Set(source_view.LookupParameter('View Classification').AsString())
     except:
         print('No "View Classification" parameter in destination view')
+        CreateProjectParameterFromExistingSharedParameter(app, "View Classification", cats1, DB.BuiltInParameterGroup.PG_DATA, False);
 
     try:
         dest_view.LookupParameter('View Type').Set(source_view.LookupParameter('View Type').AsString())  # this was the line that is causing the "NoneType Error for the "DB.ElementTransformUtils.CopyElements()"" error (because 'View Type' was just 'View')
     except:
         print('No "View Type" parameter in destination view')
+        CreateProjectParameterFromExistingSharedParameter(app, "View Type", cats1, DB.BuiltInParameterGroup.PG_DATA, False);
+   
+
    
 
 
