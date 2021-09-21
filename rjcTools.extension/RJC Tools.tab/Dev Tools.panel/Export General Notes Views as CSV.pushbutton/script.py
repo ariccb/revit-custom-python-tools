@@ -1,4 +1,6 @@
 # Set sys.path
+from datetime import date
+import string
 import sys
 import os
 import fnmatch
@@ -17,10 +19,12 @@ from pyrevit import forms
 from pyrevit.revit import query
 from Autodesk.Revit.DB import Element as DBElement
 
-__doc__='Imports General Notes from the Corporate General Notes Revit File ' \
-        'saved in the Resource Folder. It opens the Corporate file in the ' \
-        'background as Detached, and loads them into the current Revit file.' \
-        'Developed by: Aric Crosson Bouwers.'
+__doc__='This tool is only to be used by those in charge of updating the General Notes Selection Tool Excel File.'\
+        'It imports General Notes from the Corporate General Notes Revit File ' \
+        'maintained by Robert Koller in the Resource Folder. It opens the Corporate file in the ' \
+        'background as Detached, and exports the selected notes as a list in a CSV file' \
+        'which is saved to the RJC Sandbox folders.'\
+        'Developed by: Aric Crosson Bouwers and Stanley Cheng.'
 
 logger = script.get_logger()
 output = script.get_output()
@@ -83,9 +87,8 @@ class CopyUseDestination(DB.IDuplicateTypeNamesHandler):
         return DB.DuplicateTypeAction.UseDestinationTypes
 
 # location of Corporate General Notes File Folder (not the actual file path name, just the folder it's in)
-# corp_gn_path = 'R:\Technical Resources\STR\General Notes and Details\Revit'
-corp_gn_path = r"\\NVAN-Archive\Resources\Liaison Groups\STG\General Notes\General Notes import Testing"
-# cal_gn_path = 'R:\Office Services\CAL\STR\Cal Project Resources\_Production Resources\3 DD\RJC Calgary General Notes'
+corp_gn_path = 'R:\Technical Resources\STR\General Notes and Details\Revit'
+#cal_gn_path = 'R:\Office Services\CAL\STR\Cal Project Resources\_Production Resources\3 DD\RJC Calgary General Notes'
 
 
 # Ask if you want imperial or metric notes, load correct path
@@ -94,7 +97,7 @@ def load_metric_or_imperial_gn_in_background():
     op_set = MetricOrImperialOptionSet()
     metric_or_imperial = forms.SelectFromList.show(
         [getattr(op_set, x) for x in dir(op_set) if x.startswith('op_')], 
-        title='Select Corporate General Note To Import',
+        title='Select Corporate General Notes To Export',
         multiselect=False,
         height=225
         )
@@ -159,11 +162,11 @@ def get_user_options_for_sheets_or_views():
     if not return_option:
         print('No option was selected for either sheets or individual views to import, so the script was terminated.')
         sys.exit(0)
-    if return_option == 'Import Full Sheets': 
+    if return_option == 'Export Full Sheets': 
         #print('The option to import full sheets is under development, so the script was terminated.')
         USER_IMPORT_OPTION_CHOICES = get_user_options_for_sheets_only_import_settings()
         return return_option, USER_IMPORT_OPTION_CHOICES
-    elif return_option == 'Import Individual Views':
+    elif return_option == 'Export Individual Views':
         USER_IMPORT_OPTION_CHOICES = get_user_options_for_draftingview_only_import_settings()    
         return return_option, USER_IMPORT_OPTION_CHOICES
     else:
@@ -171,14 +174,14 @@ def get_user_options_for_sheets_or_views():
         sys.exit(0)
 
 def get_source_drafting_views():
-    selected_source_views = forms.select_views(title='Select Views To Import From {}'.format(gn_title),
+    selected_source_views = forms.select_views(title='Select Views To Export From {}'.format(gn_title),
                                                 doc=source_doc,
                                                 width=900,
                                                 filterfunc=(lambda x: x.ViewType == DB.ViewType.DraftingView)   # this filters out only drafting view type
                                                 )                 
 
     if not selected_source_views:
-        print('No views were selected to import so the script was terminated.')
+        print('No views were selected to export so the script was terminated.')
         sys.exit(0)
     else:
         return selected_source_views
@@ -186,14 +189,14 @@ def get_source_drafting_views():
 
 def get_source_sheets():
     #print('This functionality to load full sheets at one time is still under development, please restart and select "Import Individual Views" option.')
-    selected_source_sheets = forms.select_sheets(title='Select Sheets To Import From {}'.format(gn_title),
+    selected_source_sheets = forms.select_sheets(title='Select Sheets To Export From {}'.format(gn_title),
                                                 doc=source_doc,
                                                 width=900,
                                                 #filterfunc=(lambda x: x.ViewType == DB.ViewType.DrawingSheet)   # this filters out only drafting view type
                                                 )                 
 
     if not selected_source_sheets:
-        print('No sheets were selected to import so the script was terminated.')
+        print('No sheets were selected to export so the script was terminated.')
         sys.exit(0)
     else:
         return selected_source_sheets
@@ -204,8 +207,8 @@ def get_user_options_for_draftingview_only_import_settings():
     return_options = \
         forms.SelectFromList.show(
             [getattr(op_set, x) for x in dir(op_set) if x.startswith('op_')],
-            title='Select Import Options',
-            button_name='Import Now',
+            title='Select Export Options',
+            button_name='Select Views to Export',
             multiselect=True,
             height=225
             )
@@ -216,8 +219,8 @@ def get_user_options_for_sheets_only_import_settings():
     return_options = \
         forms.SelectFromList.show(
             [getattr(op_set, x) for x in dir(op_set) if x.startswith('op_')],
-            title='Select Import Options',
-            button_name='Import Now',
+            title='Select Export Options',
+            button_name='Select Views to Export',
             multiselect=True
             )
     return op_set
@@ -640,20 +643,21 @@ def copy_sheet(sourceDoc, source_view, dest_doc):
 
 # view_count = None
 
-outputList = ["View ID,Office ID,View Name"]
+outputList = ["RJC Standard View ID,Office ID,View Name"]
 
 source_doc, gn_title = load_metric_or_imperial_gn_in_background()
 source_views = get_source_drafting_views()
 for views in source_views:
-    viewId = '"{}"'.format(str(views.LookupParameter("RJC Standard View ID").AsString()))
-    officeId = '"{}"'.format(str(views.LookupParameter("RJC Office ID").AsString()))
+    RJCStandardViewID = '"{}"'.format(str(views.LookupParameter("RJC Standard View ID").AsString()))
+    RJCOfficeID = '"{}"'.format(str(views.LookupParameter("RJC Office ID").AsString()))
     viewName = '"{}"'.format(str(views.Name))
 
-    outputList.append(",".join([viewId, officeId, viewName]))
+    outputList.append(",".join([RJCStandardViewID, RJCOfficeID, viewName]))
 
 outputString = "\n".join(outputList)
 
-with open(r"C:\Users\scheng\Desktop\Working\VBA\General Notes Import\test.csv", "w") as f:
+#save location for "General Notes Export for Excel Form.csv"
+with open(r"R:\Technical Resources\RJC Sandbox\PyRevit Custom Scripts\General Notes Import Tool\Exported GN Lists for updating the Selection Tool\Exported_" + str(gn_title) + " List_" + str(date.today()) + ".csv", "w") as f: 
     f.write(outputString)
 
 print(outputList)
