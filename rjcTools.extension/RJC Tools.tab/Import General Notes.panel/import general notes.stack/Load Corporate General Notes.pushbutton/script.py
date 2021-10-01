@@ -340,19 +340,6 @@ def copy_view_contents(sourceDoc, source_view, dest_doc, dest_view,
             
     return True
 
-# def GetParamValue(eType, pName):          # get parameter by name, with known type
-#     paramValue = None
-#     for i in eType.Parameters:
-# 	    if i.Definition.Name == pName:
-# 		    paramValue = i.AsValueString()
-# 			#paramValue = i.AsDouble()
-# 		    break
-# 	    else:
-# 		    continue
-#     return paramValue
-
-
-##---------------trying to convert code from C# to python here - from https://spiderinnet.typepad.com/blog/2011/05/parameter-of-revit-api-31-create-project-parameter.html
 def CreateProjectParameterFromExistingSharedParameter(app, name, category_set, built_in_parameter_group, inst):
     shared_parameter_file = app.OpenSharedParameterFile()
     if(shared_parameter_file == None):
@@ -426,28 +413,6 @@ def copy_view_props(source_view, dest_view):
             CreateProjectParameterFromExistingSharedParameter(app, "View Type", cats1, DB.BuiltInParameterGroup.PG_IDENTITY_DATA, True)
             attempts -= 1
             
-        
-        # try:
-        #     print('trying RJC STANDARD VIEW ID')
-        #     dest_view.LookupParameter('RJC Standard View ID').Set(source_view.LookupParameter('RJC Standard View ID').AsString())
-        # except:
-        #     CreateProjectParameterFromExistingSharedParameter(app, "RJC Standard View ID", cats1, DB.BuiltInParameterGroup.PG_IDENTITY_DATA, True)
-        #     raise Exception('No "RJC Standard View ID" parameter in destination project')
-        
-        # try:
-        #     print('trying VIEW CLASSIFICATION')
-        #     dest_view.LookupParameter('View Classification').Set(source_view.LookupParameter('View Classification').AsString())
-        # except:
-        #     CreateProjectParameterFromExistingSharedParameter(app, "View Classification", cats1, DB.BuiltInParameterGroup.PG_IDENTITY_DATA, True)
-        #     raise Exception('No "View Classification" parameter in destination project')
-        
-        # try:
-        #     print('trying VIEW TYPE')
-        #     dest_view.LookupParameter('View Type').Set(source_view.LookupParameter('View Type').AsString())  # this was the line that is causing the "NoneType Error for the "DB.ElementTransformUtils.CopyElements()"" error (because 'View Type' was just 'View')
-        # except:
-        #     CreateProjectParameterFromExistingSharedParameter(app, "View Type", cats1, DB.BuiltInParameterGroup.PG_IDENTITY_DATA, True)
-        #     raise Exception('No "View Type" parameter in destination project')
-
 
 def copy_view(sourceDoc, source_view, dest_doc):
     matching_view = find_matching_view(dest_doc, source_view)
