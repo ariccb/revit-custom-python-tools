@@ -1,4 +1,5 @@
 # Set sys.path
+from logging import exception
 import sys
 import os
 import fnmatch
@@ -11,7 +12,7 @@ import traceback
 
 
 from pyrevit.framework import List
-from pyrevit import revit, DB
+from pyrevit import revit, DB, UI
 from pyrevit import script
 from pyrevit import forms
 from pyrevit.revit import query
@@ -204,7 +205,7 @@ def get_user_options_for_draftingview_only_import_settings():
         forms.SelectFromList.show(
             [getattr(op_set, x) for x in dir(op_set) if x.startswith('op_')],
             title='Select Import Options',
-            button_name='Import Now',
+            button_name='Accept Selection',
             multiselect=True,
             height=225
             )
@@ -216,7 +217,7 @@ def get_user_options_for_sheets_only_import_settings():
         forms.SelectFromList.show(
             [getattr(op_set, x) for x in dir(op_set) if x.startswith('op_')],
             title='Select Import Options',
-            button_name='Import Now',
+            button_name='Accept Selection',
             multiselect=True
             )
     return op_set
@@ -249,7 +250,6 @@ def find_guide(guide_name, source_doc):
     for guide in guide_elements:
         if str(guide.Name).lower() == guide_name.lower():
             return guide
-
 
 def get_view_contents(dest_doc, source_view):
     view_elements = DB.FilteredElementCollector(dest_doc, source_view.Id)\
@@ -351,34 +351,102 @@ def copy_view_contents(sourceDoc, source_view, dest_doc, dest_view,
 # 		    continue
 #     return paramValue
 
+
+##---------------trying to convert code from C# to python here - from https://spiderinnet.typepad.com/blog/2011/05/parameter-of-revit-api-31-create-project-parameter.html
+def CreateProjectParameterFromExistingSharedParameter(app, name, category_set, built_in_parameter_group, inst):
+    shared_parameter_file = app.OpenSharedParameterFile()
+    if(shared_parameter_file == None):
+        logger.error('Error: No SharedParameter File in project!')
+
+    selection_shared_param = [] 
+    for dg in shared_parameter_file.Groups:  # iterating through all parameter groups, and parameter names to find the matching "name" (RJC Office ID and RJC Standard View ID)
+        for d in dg.Definitions: 
+            if(d.Name == name):
+                selection_shared_param.append(d)
+    if(selection_shared_param == None or len(selection_shared_param) < 1):
+        logger.error('Error with RJC Shared Parameter File. Please check if it\'s correctly loaded into your project.')
+    extdef = selection_shared_param[0]
+    binding = app.Create.NewTypeBinding(category_set) # i think this is the part i need to fix - the "type" of thing the parameter is attached to - ie. Views
+    if(inst):
+        binding = app.Create.NewInstanceBinding(category_set)
+    binding_map = UI.UIApplication(app).ActiveUIDocument.Document.ParameterBindings
+    binding_map.Insert(extdef, binding, built_in_parameter_group)   #built_in_parameter_group is the "Group parameter under:" part of the parameter create dialog. 
+                                                                    #We want 'Identity Data' which is PG_IDENTITY_DATA
+                                                                    #BuiltInParameterGroup Enumeration: https://www.revitapidocs.com/2019/9942b791-2892-0658-303e-abf99675c5a6.htm
+
 def copy_view_props(source_view, dest_view):
     dest_view.Scale = source_view.Scale
-    dest_view.Parameter[VIEW_TOS_PARAM].Set(
-        source_view.Parameter[VIEW_TOS_PARAM].AsString()
-    )
-    # print(source_view.LookupParameter('RJC Office ID').AsString())
-    # print(source_view.LookupParameter('RJC Standard View ID').AsString())
+    dest_view.Parameter[VIEW_TOS_PARAM].Set(source_view.Parameter[VIEW_TOS_PARAM].AsString())
 
-    try:
-        dest_view.LookupParameter('RJC Office ID').Set(source_view.LookupParameter('RJC Office ID').AsString())
-    except:
-        print('No "RJC Office ID" parameter in destination view')
+    list_views_category = (DB.Category.GetCategory(active_doc, DB.BuiltInCategory.OST_Views)) # need to make sure this is getting the right type (Views)
+    cats1 = app.Create.NewCategorySet()
+    cats1.Insert(list_views_category)
+    attempts = 3
+    while attempts:
+        try:
+            # print('trying RJC OFFICE ID')
+            dest_view.LookupParameter('RJC Office ID').Set(source_view.LookupParameter('RJC Office ID').AsString())
+            attempts = 3
+            break
+        except:
+            # print('RJC OFFICE ID Exception thrown')
+            CreateProjectParameterFromExistingSharedParameter(app, "RJC Office ID", cats1, DB.BuiltInParameterGroup.PG_IDENTITY_DATA, True)
+            attempts -= 1
 
-    try:
-        dest_view.LookupParameter('RJC Standard View ID').Set(source_view.LookupParameter('RJC Standard View ID').AsString())
-    except:
-        print('No "RJC Standard View ID" parameter in destination view')
+    while attempts:
+        try:
+            # print('trying RJC Standard View ID')
+            dest_view.LookupParameter('RJC Standard View ID').Set(source_view.LookupParameter('RJC Standard View ID').AsString())
+            attempts = 3
+            break
+        except:
+            # print('RJC Standard View ID Exception thrown')
+            CreateProjectParameterFromExistingSharedParameter(app, "RJC Standard View ID", cats1, DB.BuiltInParameterGroup.PG_IDENTITY_DATA, True)
+            attempts -= 1
 
-    try:
-        dest_view.LookupParameter('View Classification').Set(source_view.LookupParameter('View Classification').AsString())
-    except:
-        print('No "View Classification" parameter in destination view')
+    while attempts:
+        try:
+            # print('trying View Classification')
+            dest_view.LookupParameter('View Classification').Set(source_view.LookupParameter('View Classification').AsString())
+            attempts = 3
+            break
+        except:
+            # print('View Classification Exception thrown')
+            CreateProjectParameterFromExistingSharedParameter(app, "View Classification", cats1, DB.BuiltInParameterGroup.PG_IDENTITY_DATA, True)
+            attempts -= 1
 
-    try:
-        dest_view.LookupParameter('View Type').Set(source_view.LookupParameter('View Type').AsString())  # this was the line that is causing the "NoneType Error for the "DB.ElementTransformUtils.CopyElements()"" error (because 'View Type' was just 'View')
-    except:
-        print('No "View Type" parameter in destination view')
-   
+    while attempts:
+        try:
+            # print('trying View Type')
+            dest_view.LookupParameter('View Type').Set(source_view.LookupParameter('View Type').AsString())
+            attempts = 3
+            break
+        except:
+            # print('View Type Exception thrown')
+            CreateProjectParameterFromExistingSharedParameter(app, "View Type", cats1, DB.BuiltInParameterGroup.PG_IDENTITY_DATA, True)
+            attempts -= 1
+            
+        
+        # try:
+        #     print('trying RJC STANDARD VIEW ID')
+        #     dest_view.LookupParameter('RJC Standard View ID').Set(source_view.LookupParameter('RJC Standard View ID').AsString())
+        # except:
+        #     CreateProjectParameterFromExistingSharedParameter(app, "RJC Standard View ID", cats1, DB.BuiltInParameterGroup.PG_IDENTITY_DATA, True)
+        #     raise Exception('No "RJC Standard View ID" parameter in destination project')
+        
+        # try:
+        #     print('trying VIEW CLASSIFICATION')
+        #     dest_view.LookupParameter('View Classification').Set(source_view.LookupParameter('View Classification').AsString())
+        # except:
+        #     CreateProjectParameterFromExistingSharedParameter(app, "View Classification", cats1, DB.BuiltInParameterGroup.PG_IDENTITY_DATA, True)
+        #     raise Exception('No "View Classification" parameter in destination project')
+        
+        # try:
+        #     print('trying VIEW TYPE')
+        #     dest_view.LookupParameter('View Type').Set(source_view.LookupParameter('View Type').AsString())  # this was the line that is causing the "NoneType Error for the "DB.ElementTransformUtils.CopyElements()"" error (because 'View Type' was just 'View')
+        # except:
+        #     CreateProjectParameterFromExistingSharedParameter(app, "View Type", cats1, DB.BuiltInParameterGroup.PG_IDENTITY_DATA, True)
+        #     raise Exception('No "View Type" parameter in destination project')
 
 
 def copy_view(sourceDoc, source_view, dest_doc):
@@ -438,7 +506,11 @@ def copy_view(sourceDoc, source_view, dest_doc):
                 )
                 revit.update.set_name(new_view,
                                       revit.query.get_name(source_view))
-                copy_view_props(source_view, new_view)
+                try:
+                    copy_view_props(source_view, new_view)
+                except:
+                    logger.error('Error copying in view properties. Trying again.')
+                    copy_view_props(source_view, new_view)
         except Exception as sheet_err:
             logger.error('Error creating drafting view. | {}'
                          .format(sheet_err))
