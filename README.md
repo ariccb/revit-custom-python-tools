@@ -1,2 +1,2 @@
 # rjcPythonExtensionBundle
- Containing all custom Python scripts and tools
+ Containing all custom PyRevit scripts and tools for RJC's use
