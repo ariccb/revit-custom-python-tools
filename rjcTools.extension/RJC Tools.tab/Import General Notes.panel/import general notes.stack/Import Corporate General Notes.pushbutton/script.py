@@ -59,7 +59,7 @@ class SheetOrViewOptionSet:
 class ViewsOnlyOptionSet:
     def __init__(self):
         self.op_update_exist_view_contents = \
-            Option('Update Existing Views From Corporate General Notes \n(*CAUTION* Overwrites Corresponding Views)',False)
+            Option('Replace/Overwrite Existing Views In Project With Default Corporate General Notes \n(*CAUTION* Removes all edits to corresponding views and resets to corporate standard)',False)
 
 # third user input after selecting "Import Full Sheets"
 class SheetsOnlyOptionSet:
@@ -72,7 +72,7 @@ class SheetsOnlyOptionSet:
             Option('Copy Placeholders as Sheets', True)
         self.op_copy_guides = Option('Copy Guide Grids', True)
         self.op_update_exist_view_contents = \
-            Option('Update Existing Views From Corporate General Notes \n(*CAUTION* Overwrites Corresponding Views)',False)
+            Option('Replace/Overwrite Existing Views In Project With Default Corporate General Notes \n(*CAUTION* Removes all edits to corresponding views and resets to corporate standard)',False)
         # self.op_update_exist_vport_locations = \
         #    Option('Update Existing Viewport Locations')
 
@@ -204,10 +204,11 @@ def get_user_options_for_draftingview_only_import_settings():
     return_options = \
         forms.SelectFromList.show(
             [getattr(op_set, x) for x in dir(op_set) if x.startswith('op_')],
-            title='Select Import Options',
+            title='Select View Import Options',
             button_name='Accept Selection',
+            width=600,
             multiselect=True,
-            height=225
+            height=350
             )
     return op_set
 
@@ -216,8 +217,10 @@ def get_user_options_for_sheets_only_import_settings():
     return_options = \
         forms.SelectFromList.show(
             [getattr(op_set, x) for x in dir(op_set) if x.startswith('op_')],
-            title='Select Import Options',
+            title='Select Sheet Import Options',
             button_name='Accept Selection',
+            width=600,
+            height=350,
             multiselect=True
             )
     return op_set
