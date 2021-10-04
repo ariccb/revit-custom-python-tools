@@ -65,16 +65,14 @@ class ViewsOnlyOptionSet:
 class SheetsOnlyOptionSet:
     def __init__(self):
         self.op_copy_vports = Option('Copy Viewports', True)
-        self.op_copy_schedules = Option('Copy Schedules', True)
+        # self.op_copy_schedules = Option('Copy Schedules', True)
         self.op_copy_titleblock = Option('Copy Sheet Titleblock', True)
-        self.op_copy_revisions = Option('Copy and Set Sheet Revisions', False)
-        self.op_copy_placeholders_as_sheets = \
-            Option('Copy Placeholders as Sheets', True)
-        self.op_copy_guides = Option('Copy Guide Grids', True)
+        # self.op_copy_revisions = Option('Copy and Set Sheet Revisions', False)
+        # self.op_copy_placeholders_as_sheets = \
+        #     Option('Copy Placeholders as Sheets', True)
+        # self.op_copy_guides = Option('Copy Guide Grids', True)
         self.op_update_exist_view_contents = \
             Option('Replace/Overwrite Existing Views In Project With Default Corporate General Notes \n(*CAUTION* Removes all edits to corresponding views and resets to corporate standard)',False)
-        # self.op_update_exist_vport_locations = \
-        #    Option('Update Existing Viewport Locations')
 
 class CopyUseDestination(DB.IDuplicateTypeNamesHandler):
     """Handle copy and paste errors."""
@@ -264,8 +262,8 @@ def get_view_contents(dest_doc, source_view):
         if (element.Category and element.Category.Name == 'Title Blocks') \
                 and not USER_IMPORT_OPTION_CHOICES.op_copy_titleblock:
             continue
-        elif isinstance(element, DB.ScheduleSheetInstance) \
-                and not USER_IMPORT_OPTION_CHOICES.op_copy_schedules:
+        elif isinstance(element, DB.ScheduleSheetInstance): #\
+                # and not USER_IMPORT_OPTION_CHOICES.op_copy_schedules:
             continue
         elif isinstance(element, DB.Viewport) \
                 or 'ExtentElem' in query.get_name(element):
@@ -445,9 +443,7 @@ def copy_view(sourceDoc, source_view, dest_doc):
                          'Creating destination sheet.')
 
             with revit.Transaction('Create Sheet', doc=dest_doc):
-                if not source_view.IsPlaceholder \
-                        or (source_view.IsPlaceholder
-                                and USER_IMPORT_OPTION_CHOICES.op_copy_placeholders_as_sheets):
+                if not source_view.IsPlaceholder: #\or (source_view.IsPlaceholder and USER_IMPORT_OPTION_CHOICES.op_copy_placeholders_as_sheets):
                     new_view = \
                         DB.ViewSheet.Create(
                             dest_doc,
@@ -653,19 +649,19 @@ def copy_sheet(sourceDoc, source_view, dest_doc):
                 else:
                     print('Skipping viewports...')
 
-                if USER_IMPORT_OPTION_CHOICES.op_copy_guides:
-                    logger.debug('Copying sheet guide grids...')
-                    copy_sheet_guides(sourceDoc, source_view,
-                                      dest_doc, new_sheet)
-                else:
-                    print('Skipping sheet guides...')
+                # if USER_IMPORT_OPTION_CHOICES.op_copy_guides:
+                #     logger.debug('Copying sheet guide grids...')
+                #     copy_sheet_guides(sourceDoc, source_view,
+                #                       dest_doc, new_sheet)
+                # else:
+                #     print('Skipping sheet guides...')
 
-            if USER_IMPORT_OPTION_CHOICES.op_copy_revisions:
-                logger.debug('Copying sheet revisions...')
-                copy_sheet_revisions(sourceDoc, source_view,
-                                     dest_doc, new_sheet)
-            else:
-                print('Skipping revisions...')
+            # if USER_IMPORT_OPTION_CHOICES.op_copy_revisions:
+            #     logger.debug('Copying sheet revisions...')
+            #     copy_sheet_revisions(sourceDoc, source_view,
+            #                          dest_doc, new_sheet)
+            # else:
+            #     print('Skipping revisions...')
 
         else:
             logger.error('Failed copying sheet: {}'.format(source_view.Name))
