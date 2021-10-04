@@ -3,6 +3,7 @@ from logging import exception
 import sys
 import os
 import fnmatch
+import csv
 
 import pyrevit
 from pyrevit.forms import ParamDef, alert
@@ -12,6 +13,7 @@ import traceback
 
 
 from pyrevit.framework import List
+from pyrevit import HOST_APP
 from pyrevit import revit, DB, UI
 from pyrevit import script
 from pyrevit import forms
@@ -54,6 +56,7 @@ class SheetOrViewOptionSet:
     def __init__(self):
         self.op_load_full_sheets = Option('Import Full Sheets', False)
         self.op_load_individual_sheets = Option('Import Individual Views', True)
+        self.op_load_individual_sheets_csv = Option("Import Individual Views from CSV", False)
 
 # third user input after selecting "Import Individual Views"
 class ViewsOnlyOptionSet:
@@ -164,6 +167,9 @@ def get_user_options_for_sheets_or_views():
     elif return_option == 'Import Individual Views':
         USER_IMPORT_OPTION_CHOICES = get_user_options_for_draftingview_only_import_settings()    
         return return_option, USER_IMPORT_OPTION_CHOICES
+    elif return_option == "Import Individual Views from CSV":
+        USER_IMPORT_OPTION_CHOICES = get_user_options_for_draftingview_only_import_settings()    
+        return return_option, USER_IMPORT_OPTION_CHOICES    
     else:
         print('An unknown error occurred, so the script was terminated.')
         sys.exit(0)
@@ -180,6 +186,65 @@ def get_source_drafting_views():
         sys.exit(0)
     else:
         return selected_source_views
+
+def get_source_drafting_views_from_CSV():
+    def get_views(title='Select Views',
+                    button_name='Select',
+                    width=500,
+                    multiple=True,
+                    filterfunc=None,
+                    doc=None):
+        doc = doc or HOST_APP.doc
+
+    
+
+        # otherwise get all sheets and prompt for selection
+        all_graphviews = revit.query.get_all_views(doc=doc)
+
+        if filterfunc:
+            all_graphviews = filter(filterfunc, all_graphviews)
+
+        return all_graphviews
+
+
+
+    source_views = get_views(title='Select Views To Import From {}'.format(gn_title),
+                            doc=source_doc,
+                            width=900,
+                            filterfunc=(lambda x: x.ViewType == DB.ViewType.DraftingView)   # this filters out only drafting view type
+                            )
+    # central_path = DB.ModelPathUtils.ConvertModelPathToUserVisiblePath()
+    # print(central_path)
+   
+    filePath = forms.pick_file(file_ext="csv")
+                                #init_dir=central_path)
+    with open(filePath) as f:
+        reader = csv.reader(f)
+        data = list(reader)
+    
+    officeViewHash = [i[0]+i[1] for i in data]
+
+    checked_views = []
+    for view in source_views:
+        viewHash = (str(view.LookupParameter("RJC Standard View ID").AsString()) +
+                    str(view.LookupParameter("RJC Office ID").AsString()))
+        
+        checked_views.append(forms.ViewOption(view))
+        if viewHash in officeViewHash:
+            checked_views[-1].state = True
+
+    selected_views = forms.SelectFromList.show(sorted(checked_views, key=lambda x: x.name),
+                                title='Select Views To Import From {}'.format(gn_title),
+                                button_name="Select",
+                                width=900,
+                                multiselect=True,
+                                checked_only=True)
+
+    if not selected_views:
+        print('No views were selected to import so the script was terminated.')
+        sys.exit(0)
+    else:
+        return selected_views
 
 
 def get_source_sheets():
@@ -341,19 +406,6 @@ def copy_view_contents(sourceDoc, source_view, dest_doc, dest_view,
             
     return True
 
-# def GetParamValue(eType, pName):          # get parameter by name, with known type
-#     paramValue = None
-#     for i in eType.Parameters:
-# 	    if i.Definition.Name == pName:
-# 		    paramValue = i.AsValueString()
-# 			#paramValue = i.AsDouble()
-# 		    break
-# 	    else:
-# 		    continue
-#     return paramValue
-
-
-##---------------trying to convert code from C# to python here - from https://spiderinnet.typepad.com/blog/2011/05/parameter-of-revit-api-31-create-project-parameter.html
 def CreateProjectParameterFromExistingSharedParameter(app, name, category_set, built_in_parameter_group, inst):
     shared_parameter_file = app.OpenSharedParameterFile()
     if(shared_parameter_file == None):
@@ -427,28 +479,6 @@ def copy_view_props(source_view, dest_view):
             CreateProjectParameterFromExistingSharedParameter(app, "View Type", cats1, DB.BuiltInParameterGroup.PG_IDENTITY_DATA, True)
             attempts -= 1
             
-        
-        # try:
-        #     print('trying RJC STANDARD VIEW ID')
-        #     dest_view.LookupParameter('RJC Standard View ID').Set(source_view.LookupParameter('RJC Standard View ID').AsString())
-        # except:
-        #     CreateProjectParameterFromExistingSharedParameter(app, "RJC Standard View ID", cats1, DB.BuiltInParameterGroup.PG_IDENTITY_DATA, True)
-        #     raise Exception('No "RJC Standard View ID" parameter in destination project')
-        
-        # try:
-        #     print('trying VIEW CLASSIFICATION')
-        #     dest_view.LookupParameter('View Classification').Set(source_view.LookupParameter('View Classification').AsString())
-        # except:
-        #     CreateProjectParameterFromExistingSharedParameter(app, "View Classification", cats1, DB.BuiltInParameterGroup.PG_IDENTITY_DATA, True)
-        #     raise Exception('No "View Classification" parameter in destination project')
-        
-        # try:
-        #     print('trying VIEW TYPE')
-        #     dest_view.LookupParameter('View Type').Set(source_view.LookupParameter('View Type').AsString())  # this was the line that is causing the "NoneType Error for the "DB.ElementTransformUtils.CopyElements()"" error (because 'View Type' was just 'View')
-        # except:
-        #     CreateProjectParameterFromExistingSharedParameter(app, "View Type", cats1, DB.BuiltInParameterGroup.PG_IDENTITY_DATA, True)
-        #     raise Exception('No "View Type" parameter in destination project')
-
 
 def copy_view(sourceDoc, source_view, dest_doc):
     matching_view = find_matching_view(dest_doc, source_view)
@@ -718,9 +748,13 @@ logger.debug('source doc (loaded in background): {}'.format(source_doc))
 view_count = None
 
 # this path runs if the user selects 'Import Individual Views'. 
-if SHEETS_OR_VIEWS_OPTION_SET == 'Import Individual Views':
+if SHEETS_OR_VIEWS_OPTION_SET == 'Import Individual Views' or SHEETS_OR_VIEWS_OPTION_SET == "Import Individual Views from CSV":
     print('Drafting views path triggered')
-    source_views = get_source_drafting_views() # asks user to input choice for which views to import
+
+    if SHEETS_OR_VIEWS_OPTION_SET == 'Import Individual Views':
+        source_views = get_source_drafting_views() # asks user to input choice for which views to import
+    elif SHEETS_OR_VIEWS_OPTION_SET == "Import Individual Views from CSV":
+        source_views = get_source_drafting_views_from_CSV()
 
     # keeps track of how many views have been imported
     view_count = len(source_views)
@@ -728,16 +762,24 @@ if SHEETS_OR_VIEWS_OPTION_SET == 'Import Individual Views':
 
     view_work = view_count 
     view_work_counter = 0
+    errorCounter = 0
 
     output.print_md('**Copying View(s) to Document:** {0}'.format(dest_doc.Title))
 
     for source_view in source_views:
         print('{0}'.format(source_view.Name))
         copy_view(source_doc, source_view, dest_doc)
+           
+        # try:
+        #     copy_view(source_doc, source_view, dest_doc)
+        # except:
+        #     errorCounter += 1
+        #     print("ERROR: VIEW SKIPPED")      
         view_work_counter += 1
         output.update_progress(view_work_counter, view_work)
 
     output.print_md('**Copied {} views to {}.**'.format(view_count, dest_doc.Title))
+    output.print_md('**{} sheets resulted in an import error**'.format(errorCounter))
     output.print_md('**GENERAL NOTE IMPORT COMPLETE**')
 
 elif SHEETS_OR_VIEWS_OPTION_SET == 'Import Full Sheets':
@@ -754,17 +796,23 @@ elif SHEETS_OR_VIEWS_OPTION_SET == 'Import Full Sheets':
 
     sheet_work = sheet_count
     sheet_work_counter = 0
+    errorCounter = 0
 
     output.print_md('**Copying Sheet(s) to Document:** {0}'.format(dest_doc.Title))
 
     for source_sheet in source_sheets:
         print('{0} - {1}:'.format(source_sheet.SheetNumber,
                                             source_sheet.Name))
-        copy_sheet(source_doc, source_sheet, dest_doc)
+        try:
+            copy_sheet(source_doc, source_sheet, dest_doc)
+        except:
+            errorCounter += 1
+            print("ERROR: VIEW SKIPPED")
         sheet_work_counter += 1
         output.update_progress(sheet_work_counter, sheet_work)
 
     output.print_md('**Copied {0} sheets and {1} views to {2}.**'.format(sheet_count, counter_views_on_sheets, dest_doc.Title))
+    output.print_md('**{} sheets resulted in an import error**'.format(errorCounter))
     output.print_md('**GENERAL NOTE IMPORT COMPLETE**')
 
 else:
